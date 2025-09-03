@@ -1,6 +1,7 @@
-#include <utils/hello.h>
+#include "main.h"
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[])
+{
     saludar("query_control");
     return 0;
 }
