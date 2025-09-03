@@ -1,7 +1,8 @@
-#include "main.h"
+#include <main.h>
 
 int main(int argc, char *argv[])
 {
-    saludar("query_control");
+    init(argv[1]);
+
     return 0;
 }
