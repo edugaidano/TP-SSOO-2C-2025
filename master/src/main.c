@@ -2,6 +2,7 @@
 
 int main(int argc, char *argv[])
 {
-    saludar("master");
+    init(argv[1]);
+
     return 0;
 }

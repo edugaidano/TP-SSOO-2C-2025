@@ -1,0 +1,10 @@
+#ifndef GLOBALS_H
+#define GLOBALS_H
+#include <commons/log.h>
+
+extern t_log *logger_master;
+extern int PUERTO_ESCUCHA;
+extern char *ALGORITMO_PLANIFICACION;
+extern int TIEMPO_AGING;
+
+#endif
