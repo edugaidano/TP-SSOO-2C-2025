@@ -8,7 +8,8 @@ int main(int argc, char *argv[])
 
     int server_socket = create_server(PUERTO_ESCUCHA, logger_master);
 
-    int conection_socket = accept_connection(server_socket, logger_master);
-
+    pthread_t main_thread, connections_thread;
+    pthread_create(main_thread, NULL, master_main_handler, NULL);
+    pthread_create(connections_thread, NULL, master_network_handler, server_socket);
     return 0;
 }
