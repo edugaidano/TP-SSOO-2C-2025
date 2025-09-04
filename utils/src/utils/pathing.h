@@ -1,5 +1,5 @@
-#ifndef _UTILS_RUTAS_H_
-#define _UTILS_RUTAS_H_
+#ifndef _UTILS_PATHING_H_
+#define _UTILS_PATHING_H_
 
 #include <commons/string.h>
 #include <commons/log.h>

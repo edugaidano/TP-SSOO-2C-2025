@@ -10,10 +10,10 @@ void init(char *config_name)
 
     t_config *config_worker = config_create(config_path);
 
-    IP_MASTER = config_get_int_value(config_worker, "IP_MASTER");
-    PUERTO_MASTER = config_get_int_value(config_worker, "PUERTO_MASTER");
-    IP_STORAGE = config_get_int_value(config_worker, "IP_STORAGE");
-    PUERTO_STORAGE = config_get_int_value(config_worker, "PUERTO_STORAGE");
+    IP_MASTER = config_get_string_value(config_worker, "IP_MASTER");
+    PUERTO_MASTER = config_get_string_value(config_worker, "PUERTO_MASTER");
+    IP_STORAGE = config_get_string_value(config_worker, "IP_STORAGE");
+    PUERTO_STORAGE = config_get_string_value(config_worker, "PUERTO_STORAGE");
     TAM_MEMORIA = config_get_int_value(config_worker, "TAM_MEMORIA");
     RETARDO_MEMORIA = config_get_int_value(config_worker, "RETARDO_MEMORIA");
     ALGORITMO_REEMPLAZO = config_get_int_value(config_worker, "ALGORITMO_REEMPLAZO");

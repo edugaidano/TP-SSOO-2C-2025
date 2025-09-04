@@ -3,7 +3,7 @@
 #include <commons/log.h>
 
 extern t_log *logger_query_control;
-extern int PUERTO_MASTER;
-extern int IP_MASTER;
+extern char *PUERTO_MASTER;
+extern char *IP_MASTER;
 
 #endif

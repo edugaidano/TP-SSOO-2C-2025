@@ -10,7 +10,7 @@ void init(char *config_name)
 
     t_config *config_master = config_create(config_path);
 
-    PUERTO_ESCUCHA = config_get_int_value(config_master, "PUERTO_ESCUCHA");
+    PUERTO_ESCUCHA = config_get_string_value(config_master, "PUERTO_ESCUCHA");
     ALGORITMO_PLANIFICACION = config_get_string_value(config_master, "ALGORITMO_PLANIFICACION");
     TIEMPO_AGING = config_get_int_value(config_master, "TIEMPO_AGING");
 }

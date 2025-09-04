@@ -10,6 +10,6 @@ void init(char *config_name)
 
     t_config *config_query_control = config_create(config_path);
 
-    PUERTO_MASTER = config_get_int_value(config_query_control, "PUERTO_MASTER");
-    IP_MASTER = config_get_int_value(config_query_control, "IP_MASTER");
+    PUERTO_MASTER = config_get_string_value(config_query_control, "PUERTO_MASTER");
+    IP_MASTER = config_get_string_value(config_query_control, "IP_MASTER");
 }

@@ -1,4 +1,4 @@
-#include <utils/rutas.h>
+#include <utils/pathing.h>
 
 char *build_path(char *relative_path, t_log *logger)
 {

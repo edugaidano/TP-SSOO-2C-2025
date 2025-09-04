@@ -10,7 +10,7 @@ void init(char *config_name)
 
     t_config *config_storage = config_create(config_path);
 
-    PUERTO_ESCUCHA = config_get_int_value(config_storage, "PUERTO_ESCUCHA");
+    PUERTO_ESCUCHA = config_get_string_value(config_storage, "PUERTO_ESCUCHA");
     FRESH_START = config_get_int_value(config_storage, "FRESH_START");
     RETARDO_OPERACION = config_get_int_value(config_storage, "RETARDO_OPERACION");
     RETARDO_ACCESO_BLOQUE = config_get_int_value(config_storage, "RETARDO_ACCESO_BLOQUE");

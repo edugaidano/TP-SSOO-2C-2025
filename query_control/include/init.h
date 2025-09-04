@@ -5,7 +5,7 @@
 #include <commons/config.h>
 #include <commons/string.h>
 #include <globals.h>
-#include <utils/rutas.h>
+#include <utils/pathing.h>
 
 void init(char *ruta_config);
 
