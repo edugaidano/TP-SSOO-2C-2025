@@ -1,5 +1,5 @@
-#ifndef GLOBALS_H
-#define GLOBALS_H
+#ifndef QUERY_GLOBALS_H
+#define QUERY_GLOBALS_H
 #include <commons/log.h>
 
 extern t_log *logger_query_control;

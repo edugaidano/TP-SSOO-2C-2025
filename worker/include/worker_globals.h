@@ -1,5 +1,7 @@
-#ifndef GLOBALS_H
-#define GLOBALS_H
+#ifndef WORKER_GLOBALS_H
+#define WORKER_GLOBALS_H
+
+#include <utils/networking.h>
 #include <commons/log.h>
 
 extern t_log *logger_worker;

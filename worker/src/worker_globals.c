@@ -1,4 +1,4 @@
-#include <globals.h>
+#include <worker_globals.h>
 
 t_log *logger_worker;
 char *IP_MASTER;

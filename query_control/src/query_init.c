@@ -1,4 +1,4 @@
-#include <init.h>
+#include <query_init.h>
 
 void init(char *config_name)
 {

@@ -1,4 +1,4 @@
-#include <globals.h>
+#include <storage_globals.h>
 
 t_log *logger_storage;
 char *PUERTO_ESCUCHA;

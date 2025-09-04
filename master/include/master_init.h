@@ -1,10 +1,10 @@
-#ifndef INIT_H
-#define INIT_H
+#ifndef MASTER_INIT_H
+#define MASTER_INIT_H
 
 #include <commons/log.h>
 #include <commons/config.h>
 #include <commons/string.h>
-#include <globals.h>
+#include <master_globals.h>
 #include <utils/pathing.h>
 
 void init(char *ruta_config);
