@@ -16,8 +16,8 @@ int main(int argc, char *argv[])
     log_info(logger_query_control, "## Solicitud de ejecución de Query: %s, prioridad: %s", argv[2], argv[3]);
     // Enviar handshake al Master
     paquete_t* paquete_handshake = crear_paquete(HANDSHAKE_QUERY_MASTER);
-    agregar_a_paquete(paquete_handshake, argv[2], string_length(argv[2]));
-    agregar_a_paquete(paquete_handshake, argv[3], string_length(argv[3]));
+    agregar_a_paquete(paquete_handshake, argv[2], string_length(argv[2]) + 1);
+    agregar_a_paquete(paquete_handshake, argv[3], string_length(argv[3]) + 1);
     void* handshake = serializar_paquete(paquete_handshake);
 
     if (send(master_socket, handshake, espacio_paquete_serializado(paquete_handshake), 0) == -1) {
@@ -27,11 +27,13 @@ int main(int argc, char *argv[])
 
     // Verificar handshake
     if (resultado_handshake(master_socket, logger_query_control) == ERROR) {
-        log_error(logger_query_control, "No se verificó el handshake con la memoria");
+        log_error(logger_query_control, "No se verificó el handshake con el Master");
         exit(EXIT_FAILURE);
     }
 
     //TODO
+    while (1) {
+    }
 
     log_info(logger_query_control, "## Query Finalizada - <MOTIVO>");
     return 0;

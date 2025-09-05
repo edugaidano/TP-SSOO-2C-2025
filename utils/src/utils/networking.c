@@ -165,13 +165,3 @@ resultado_t resultado_handshake(int fd_conexion, t_log* logger) {
     }
     return resultado;
 }
-
-int enviar_operacion(op_code codigo_operacion, void* datos, int size_datos, int fd_conexion) {
-    int size = sizeof(codigo_operacion) + size_datos;
-    void* buffer = malloc(size);
-    memcpy(buffer, &codigo_operacion, sizeof(codigo_operacion));
-    memcpy(buffer + sizeof(codigo_operacion), datos, size_datos);
-    int resultado = send(fd_conexion, buffer, size, 0);
-    free(buffer);
-    return resultado;
-}

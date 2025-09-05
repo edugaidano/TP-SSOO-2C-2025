@@ -54,6 +54,4 @@ int connect_to_server(char *IP, char *PORT, t_log *log);
 void enviar_resultado_handshake(int fd_conexion, resultado_t resultado, t_log* logger);
 resultado_t resultado_handshake(int fd_conexion, t_log* logger);
 
-int enviar_operacion(op_code codigo_operacion, void* datos, int size_datos, int fd_conexion);
-
 #endif

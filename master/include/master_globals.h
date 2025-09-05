@@ -13,5 +13,10 @@ typedef struct {
     char* paht;
 } info_query;
 
+typedef struct {
+    int fd;
+    char* identificador;
+} info_worker;
+
 
 #endif
