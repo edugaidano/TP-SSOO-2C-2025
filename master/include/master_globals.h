@@ -7,4 +7,11 @@ extern char *PUERTO_ESCUCHA;
 extern char *ALGORITMO_PLANIFICACION;
 extern int TIEMPO_AGING;
 
+typedef struct {
+    int fd;
+    int prioridad;
+    char* paht;
+} info_query;
+
+
 #endif

@@ -1,0 +1,11 @@
+#ifndef _UTILS_OP_CODES_H_
+#define _UTILS_OP_CODES_H_
+
+typedef enum {
+    HANDSHAKE_QUERY_MASTER,
+    HANDSHAKE_WORKER_MASTER,
+    HANDSHAKE_WORKER_STORAGE,
+    RESULTADO_HANDSHAKE
+} op_code;
+
+#endif

@@ -2,4 +2,5 @@
 
 void *master_main_handler(void *arg)
 {
+    return NULL;
 }
