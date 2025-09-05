@@ -1,5 +1,8 @@
 #ifndef STORAGE_WORKER_HANDLER_H
 #define STORAGE_WORKER_HANDLER_H
 
-void *storage_worker_handler();
+#include <utils/networking.h>
+#include <storage_globals.h>
+
+void *storage_worker_handler(void *arg);
 #endif
