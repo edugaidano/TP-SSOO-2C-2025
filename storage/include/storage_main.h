@@ -5,7 +5,7 @@
 #include <utils/networking.h>
 #include <storage_globals.h>
 #include <storage_init.h>
-#include <worker_handler.h>
+#include <storage_worker_handler.h>
 #include <pthread.h>
 
 #endif

@@ -2,6 +2,12 @@
 
 int main(int argc, char *argv[])
 {
+    if (argc < 2)
+    {
+        fprintf(stderr, "Pasar por parámetro el nombre del archivo .conf!\n");
+        exit(EXIT_FAILURE);
+    }
+
     init(argv[1]);
 
     int server_socket = create_server(PUERTO_ESCUCHA, logger_storage);
@@ -13,7 +19,7 @@ int main(int argc, char *argv[])
         *socket_ptr = worker_socket;
 
         pthread_t client_thread;
-        pthread_create(client_thread, NULL, worker_handler, socket_ptr);
+        // pthread_create(client_thread, NULL, worker_handler, socket_ptr); TODO
     }
 
     return 0;

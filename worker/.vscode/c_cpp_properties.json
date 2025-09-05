@@ -4,6 +4,7 @@
       "name": "Linux",
       "includePath": [
         "${workspaceFolder}/src",
+        "${workspaceFolder}/include",
         "${workspaceFolder}/../utils/src"
       ],
       "defines": [],

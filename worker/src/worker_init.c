@@ -6,9 +6,8 @@ void init(char *config_name)
     logger_worker = log_create("log_file.log", "logg_master", true, LOG_LEVEL_INFO);
     log_info(logger_worker, "log inicializado correctamente");
 
-    char *config_path = build_config_path(config_name, logger_worker);
-
-    t_config *config_worker = config_create(config_path);
+    t_config *config_worker;
+    build_config(&config_worker, config_name, logger_worker);
 
     IP_MASTER = config_get_string_value(config_worker, "IP_MASTER");
     PUERTO_MASTER = config_get_string_value(config_worker, "PUERTO_MASTER");
@@ -17,4 +16,6 @@ void init(char *config_name)
     TAM_MEMORIA = config_get_int_value(config_worker, "TAM_MEMORIA");
     RETARDO_MEMORIA = config_get_int_value(config_worker, "RETARDO_MEMORIA");
     ALGORITMO_REEMPLAZO = config_get_int_value(config_worker, "ALGORITMO_REEMPLAZO");
+
+    // config_destroy(config_worker); (?) TODO: revisar donde ponerlo
 }

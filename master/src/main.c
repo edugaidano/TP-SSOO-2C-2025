@@ -1,7 +1,12 @@
-#include "master_main.h"
+#include <master_main.h>
 
 int main(int argc, char *argv[])
 {
+    if (argc < 2) {
+        fprintf(stderr, "Pasar por parámetro el nombre del archivo .conf!\n");
+        exit(EXIT_FAILURE);
+    }
+
     init(argv[1]);
 
     log_info(logger_master, "el include esta bien hecho");
