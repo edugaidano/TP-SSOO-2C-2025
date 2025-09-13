@@ -52,5 +52,6 @@ int main(int argc, char *argv[])
 
     log_info(logger_worker, "## Query <QUERY_ID>: Se recibe la Query. El path de operaciones es: %s", path);
 
+    config_destroy(config_worker);
     return 0;
 }

@@ -1,6 +1,7 @@
 #include <worker_globals.h>
 
 t_log *logger_worker;
+t_config *config_worker;
 char *IP_MASTER;
 char *PUERTO_MASTER;
 char *IP_STORAGE;
