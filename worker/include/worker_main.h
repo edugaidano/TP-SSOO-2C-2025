@@ -5,5 +5,6 @@
 #include <utils/networking.h>
 #include <worker_globals.h>
 #include <worker_init.h>
+#include <handsake.h>
 
 #endif

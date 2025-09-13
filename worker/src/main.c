@@ -7,43 +7,17 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
+    // Iniciar Logs y Configs
     init(argv[1]);
 
-
+    // Conexiones con Storage y Master
     int storage_socket = connect_to_server(IP_STORAGE, PUERTO_STORAGE, logger_worker);
-    // Enviar handshake al Storage
-    paquete_t *paquete_handshake_storage = crear_paquete(HANDSHAKE_WORKER_STORAGE);
-    agregar_a_paquete(paquete_handshake_storage, argv[2], string_length(argv[2]) + 1);
-    void* handshake_storage = serializar_paquete(paquete_handshake_storage);
-
-    if (send(storage_socket, handshake_storage, espacio_paquete_serializado(paquete_handshake_storage), 0) == -1) {
-        log_error(logger_worker, "No se pudo enviar el handshake al Storage");
-        abort();
-    }
-
-    // Verificar handshake
-    if (resultado_handshake(storage_socket, logger_worker) == ERROR) {
-        log_error(logger_worker, "No se verificó el handshake con el Storage");
-        exit(EXIT_FAILURE);
-    }
-
-    log_info(logger_worker, "Handsake con Storage realizado correctamente");
+    enviar_handshake(HANDSHAKE_WORKER_STORAGE, storage_socket, "Storage", argv[2]);
+    verificar_resultado_handshake(storage_socket, "Storage");
     
     int master_socket = connect_to_server(IP_MASTER, PUERTO_MASTER, logger_worker);
-    // Enviar handshake al Master
-    paquete_t *paquete_handshake = crear_paquete(HANDSHAKE_WORKER_MASTER);
-    agregar_a_paquete(paquete_handshake, argv[2], string_length(argv[2]) + 1);
-    void* handshake = serializar_paquete(paquete_handshake);
-    if (send(master_socket, handshake, espacio_paquete_serializado(paquete_handshake), 0) == -1) {
-        log_error(logger_worker, "No se pudo enviar el handshake al Master");
-        abort();
-    }
-
-    // Verificar handshake
-    if (resultado_handshake(master_socket, logger_worker) == ERROR) {
-        log_error(logger_worker, "No se verificó el handshake con el Master");
-        exit(EXIT_FAILURE);
-    }
+    enviar_handshake(HANDSHAKE_WORKER_MASTER, master_socket, "Master", argv[2]);
+    verificar_resultado_handshake(master_socket, "Master");
 
     // Test
     paquete_t *paquete_path = recibir_paquete(master_socket, logger_worker);
