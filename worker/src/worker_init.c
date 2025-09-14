@@ -14,4 +14,5 @@ void init(char *config_name)
     TAM_MEMORIA = config_get_int_value(config_worker, "TAM_MEMORIA");
     RETARDO_MEMORIA = config_get_int_value(config_worker, "RETARDO_MEMORIA");
     ALGORITMO_REEMPLAZO = config_get_int_value(config_worker, "ALGORITMO_REEMPLAZO");
+    PATH_SCRIPTS = config_get_string_value(config_worker, "PATH_SCRIPTS");
 }

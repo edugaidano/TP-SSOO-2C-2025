@@ -11,6 +11,7 @@ extern char *IP_MASTER;
 extern char *PUERTO_MASTER;
 extern char *IP_STORAGE;
 extern char *PUERTO_STORAGE;
+extern char *PATH_SCRIPTS;
 extern int TAM_MEMORIA;
 extern int RETARDO_MEMORIA;
 extern int ALGORITMO_REEMPLAZO;
