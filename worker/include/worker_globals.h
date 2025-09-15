@@ -2,6 +2,7 @@
 #define WORKER_GLOBALS_H
 
 #include <utils/networking.h>
+#include <utils/set_instrucciones.h>
 #include <commons/log.h>
 #include <commons/config.h>
 
@@ -15,5 +16,11 @@ extern char *PATH_SCRIPTS;
 extern int TAM_MEMORIA;
 extern int RETARDO_MEMORIA;
 extern int ALGORITMO_REEMPLAZO;
+
+typedef struct {
+    set_instrucciones copi;
+    char *identificador;
+    char **datos;
+} t_instrucion;
 
 #endif

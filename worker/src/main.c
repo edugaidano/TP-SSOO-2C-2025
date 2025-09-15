@@ -42,16 +42,43 @@ int main(int argc, char *argv[])
 
     log_info(logger_worker, "## Query %s: Se recibe la Query. El path de operaciones es: %s", query_id, path);
 
-    //TODO: abrir archivo y leer desde el path
+    t_list* instrucciones = parsear_archivo(path);
+    free(path);
+
+    // Lectura de instrucciones
+    while (list_size(instrucciones) > pc ) {
+        t_instrucion* instruccion = list_get(instrucciones, pc);
+        log_info(logger_worker, "## Query %s: FETCH - Program Counter: %d - %s", query_id, pc, instruccion->identificador);
+
+        switch (instruccion->copi) {
+            case CREATE:
+                break;
+            case COMMIT:    
+                break;
+            case DELETE:    
+                break;
+            case FLUSH:     
+                break;
+            case TRUNCATE:  
+                break;
+            case TAG:       
+                break;
+            case READ:      
+                break;
+            case WRITE:     
+                break;
+            default:        //END
+                break;
+        }
+
+        pc ++;
+    }
+
+    list_destroy_and_destroy_elements(instrucciones, destruir_instrucciones);
 
     // Liveracion de Recursos
     config_destroy(config_worker);
     log_destroy(logger_worker);
-    free(IP_MASTER);
-    free(IP_STORAGE);
-    free(PUERTO_MASTER);
-    free(PUERTO_STORAGE);
-    free(PATH_SCRIPTS);
 
     return 0;
 }
