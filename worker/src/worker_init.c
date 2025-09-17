@@ -2,7 +2,7 @@
 
 void init(char *config_name)
 {
-    logger_worker = log_create("log_file.log", "logg_master", true, LOG_LEVEL_INFO);
+    logger_worker = log_create("log_file.log", "log_worker", true, LOG_LEVEL_INFO);
     log_info(logger_worker, "log inicializado correctamente");
 
     build_config(&config_worker, config_name, logger_worker);

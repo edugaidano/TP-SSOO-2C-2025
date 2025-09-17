@@ -10,3 +10,8 @@ char *PATH_SCRIPTS;
 int TAM_MEMORIA;
 int RETARDO_MEMORIA;
 int ALGORITMO_REEMPLAZO;
+void *memoria;
+int tam_pagina;
+int cantidad_paginas;
+t_list* tabla_paginas;
+bool* bit_map_tabla_paginas;

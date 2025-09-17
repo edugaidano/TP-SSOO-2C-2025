@@ -20,5 +20,10 @@ void verificar_resultado_handshake (int fd_emisor, char* emisor) {
         exit(EXIT_FAILURE);
     }
 
+    if (string_equals_ignore_case(emisor, "STORAGE") && recv(fd_emisor, &tam_pagina, sizeof(int), MSG_WAITALL) <= 0) {
+        log_error(logger_worker, "Error o desconeccion al recibir el tamaño de pagina");
+        exit(EXIT_FAILURE);
+    }
+
     log_info(logger_worker, "Handsake con el %s realizado correctamente", emisor);
 }
