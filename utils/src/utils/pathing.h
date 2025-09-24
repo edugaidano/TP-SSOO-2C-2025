@@ -16,16 +16,16 @@
 char *build_path(char *relative_path, t_log *logger);
 
 /**
- * @brief construye una estructura t_config en el directorio de cada componente.
+ * @brief construye una ruta al archivo de configuraciones en el directorio de cada componente.
  * Se asume que hay una carpeta llamada "config" en cada componente.
  * Se asume que los archivos vienen en formato .conf.
  * Se le pone automaticamente la extension a la ruta.
  *
- * @param config puntero a estructura t_config* que sera modificada
  * @param file_name el nombre del archivo de configuracion sin extension
  * @param logger un logger de la libreria commons, necesario para loguear errores
  *
+ * @return la ruta absoluta al archivo de configuracion
  */
-void build_config(t_config **config, char *file_name, t_log *logger);
+char *build_config_path(char *file_name, t_log *logger);
 
 #endif

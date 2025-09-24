@@ -6,8 +6,8 @@ void init(char *config_name)
     logger_worker = log_create("log_file.log", "logg_master", true, LOG_LEVEL_INFO);
     log_info(logger_worker, "log inicializado correctamente");
 
-    t_config *config_worker;
-    build_config(&config_worker, config_name, logger_worker);
+    char *config_path = build_config_path(config_name, logger_worker);
+    t_config *config_worker = config_create(config_path);
 
     IP_MASTER = config_get_string_value(config_worker, "IP_MASTER");
     PUERTO_MASTER = config_get_string_value(config_worker, "PUERTO_MASTER");

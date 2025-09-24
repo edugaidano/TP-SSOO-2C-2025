@@ -16,13 +16,14 @@ char *build_path(char *relative_path, t_log *logger)
     return path;
 }
 
-void build_config(t_config **config, char *file_name, t_log *logger)
+char *build_config_path(char *file_name, t_log *logger)
 {
     log_info(logger, "nombre del config: %s", file_name);
     char *relative_config_path = string_from_format("config/%s.conf", file_name);
     log_info(logger, "ruta relativa: %s", relative_config_path);
-
-    *config = config_create(relative_config_path);
+    char *config_path = build_path(relative_config_path, logger);
+    log_info(logger, "ruta absoluta: %s", config_path);
 
     free(relative_config_path);
+    return config_path;
 }

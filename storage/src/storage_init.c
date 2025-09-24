@@ -6,9 +6,8 @@ void init(char *config_name)
     logger_storage = log_create("log_file.log", "logg_master", true, LOG_LEVEL_INFO);
     log_info(logger_storage, "log inicializado correctamente");
 
-    t_config *config_storage;
-
-    build_config(&config_storage,config_name, logger_storage);
+    char *config_path = build_config_path(config_name, logger_storage);
+    t_config *config_storage = config_create(config_path);
 
     PUERTO_ESCUCHA = config_get_string_value(config_storage, "PUERTO_ESCUCHA");
     FRESH_START = config_get_int_value(config_storage, "FRESH_START");
