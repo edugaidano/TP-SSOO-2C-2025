@@ -12,5 +12,8 @@ void init(char *config_name)
     ALGORITMO_PLANIFICACION = config_get_string_value(config_master, "ALGORITMO_PLANIFICACION");
     TIEMPO_AGING = config_get_int_value(config_master, "TIEMPO_AGING");
 
+    querys_ready = list_create();
+    querys_exec = list_create();
+
     // config_destroy(config_master); (?) TODO: revisar donde ponerlo
 }
