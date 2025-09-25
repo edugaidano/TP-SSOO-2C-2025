@@ -9,11 +9,12 @@ extern char *ALGORITMO_PLANIFICACION;
 extern int TIEMPO_AGING;
 extern t_list *querys_ready;
 extern t_list *querys_exec;
+extern t_list *workers;
 
 typedef struct
 {
     int id;
-    int controler_socket;
+    int *controler_socket;
     char *file;
     char *prioridad;
 } query;
@@ -21,7 +22,7 @@ typedef struct
 typedef struct
 {
     int fd;
-    char *identificador;
-} info_worker;
+    char *id;
+} worker;
 
 #endif

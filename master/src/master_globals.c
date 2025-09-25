@@ -6,3 +6,4 @@ char *ALGORITMO_PLANIFICACION;
 int TIEMPO_AGING;
 t_list *querys_ready;
 t_list *querys_exec;
+t_list *workers;

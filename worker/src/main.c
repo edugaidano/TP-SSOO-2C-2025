@@ -2,55 +2,23 @@
 
 int main(int argc, char *argv[])
 {
-    if (argc < 3) {
+    if (argc < 3)
+    {
         fprintf(stderr, "Uso: %s [archivo_conf] [ID Worker]\n", argv[0]);
         exit(EXIT_FAILURE);
     }
 
     init(argv[1]);
 
-
-    int storage_socket = connect_to_server(IP_STORAGE, PUERTO_STORAGE, logger_worker);
-    // Enviar handshake al Storage
-    paquete_t *paquete_handshake_storage = crear_paquete(HANDSHAKE_WORKER_STORAGE);
-    agregar_a_paquete(paquete_handshake_storage, argv[2], string_length(argv[2]) + 1);
-    void* handshake_storage = serializar_paquete(paquete_handshake_storage);
-
-    if (send(storage_socket, handshake_storage, espacio_paquete_serializado(paquete_handshake_storage), 0) == -1) {
-        log_error(logger_worker, "No se pudo enviar el handshake al Storage");
-        abort();
-    }
-
-    // Verificar handshake
-    if (resultado_handshake(storage_socket, logger_worker) == ERROR) {
-        log_error(logger_worker, "No se verificó el handshake con el Storage");
-        exit(EXIT_FAILURE);
-    }
-
-    log_info(logger_worker, "Handsake con Storage realizado correctamente");
-    
     int master_socket = connect_to_server(IP_MASTER, PUERTO_MASTER, logger_worker);
     // Enviar handshake al Master
-    paquete_t *paquete_handshake = crear_paquete(HANDSHAKE_WORKER_MASTER);
-    agregar_a_paquete(paquete_handshake, argv[2], string_length(argv[2]) + 1);
-    void* handshake = serializar_paquete(paquete_handshake);
-    if (send(master_socket, handshake, espacio_paquete_serializado(paquete_handshake), 0) == -1) {
-        log_error(logger_worker, "No se pudo enviar el handshake al Master");
-        abort();
-    }
+    paquete_t *handshake = crear_paquete(HANDSHAKE_WORKER_MASTER);
+    agregar_a_paquete(handshake, argv[1], sizeof(argv[1]));
+    enviar_paquete(master_socket, handshake);
 
-    // Verificar handshake
-    if (resultado_handshake(master_socket, logger_worker) == ERROR) {
-        log_error(logger_worker, "No se verificó el handshake con el Master");
-        exit(EXIT_FAILURE);
-    }
-
-    // Test
-    paquete_t *paquete_path = recibir_paquete(master_socket, logger_worker);
-    buffer_t *buffer = obtener_siguiente_item(paquete_path);
-    char *path = (char*){buffer->stream};
-
-    log_info(logger_worker, "## Query <QUERY_ID>: Se recibe la Query. El path de operaciones es: %s", path);
+    char ack[4];
+    recv(master_socket, ack, 4, MSG_WAITALL);
+    log_info(logger_worker, "## handshake con master realizado");
 
     return 0;
 }

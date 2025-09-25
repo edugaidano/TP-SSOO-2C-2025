@@ -14,6 +14,7 @@ void init(char *config_name)
 
     querys_ready = list_create();
     querys_exec = list_create();
+    workers = list_create();
 
     // config_destroy(config_master); (?) TODO: revisar donde ponerlo
 }

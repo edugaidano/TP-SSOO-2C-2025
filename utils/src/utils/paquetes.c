@@ -20,7 +20,7 @@ void enviar_paquete(int socket, paquete_t *paquete)
 {
     void *paquete_serializado = serializar_paquete(paquete);
     send(socket, paquete_serializado, espacio_paquete_serializado(paquete), 0);
-    free(paquete);
+    destruir_paquete(paquete);
 }
 
 void destruir_paquete(paquete_t *paquete)
