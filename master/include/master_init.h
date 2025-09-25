@@ -6,6 +6,7 @@
 #include <commons/string.h>
 #include <master_globals.h>
 #include <utils/pathing.h>
+#include <semaphore.h>
 
 void init(char *ruta_config);
 

@@ -21,12 +21,15 @@ void *master_network_handler(void *arg)
 
             query *query = malloc(sizeof(*query));
             query->id = asign_query_id();
+            query->pc = 0;
             query->file = archivo;
             query->prioridad = prioridad;
             query->controler_socket = socket_ptr;
 
             list_add(querys_ready, query);
             send(connection_socket, "ACK", 4, 0);
+
+            sem_post(&sem_ready);
 
             log_info(logger_master, "## Se conecta un Query Control para ejecutar la Query <%s> con prioridad <%s>", archivo, prioridad);
             log_info(logger_master, "## Id asignado: <%d>. Nivel multiprocesamiento <CANTIDAD>", query->id);
@@ -43,7 +46,10 @@ void *master_network_handler(void *arg)
             list_add(workers, worker);
             send(connection_socket, "ACK", 4, 0);
 
+            sem_post(&sem_workers);
+
             log_info(logger_master, "## Se conecta el Worker <%s> - Cantidad total de Workers: <%d>", id, list_size(workers));
+            break;
         }
         default:;
         }
