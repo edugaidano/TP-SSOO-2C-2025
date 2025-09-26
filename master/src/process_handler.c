@@ -2,19 +2,19 @@
 
 void *process_handler(void *arg)
 {
-    if (strcmp(ALGORITMO_PLANIFICACION, "PRIORIDADES") == 0)
+    if (string_equals_ignore_case(ALGORITMO_PLANIFICACION, "PRIORIDADES"))
     {
         pthread_t actualizador_de_prioridad;
         pthread_create(&actualizador_de_prioridad, NULL, &actualizador, NULL);
         pthread_detach(actualizador_de_prioridad);
     }
-
-    if (strcmp(ALGORITMO_PLANIFICACION, "PRIORIDADES") == 0)
+    
+    if (string_equals_ignore_case(ALGORITMO_PLANIFICACION, "PRIORIDADES"))
     {
         pthread_t hilo_desalojador;
         pthread_create(&hilo_desalojador, NULL, &desalojador, NULL);
     }
-
+    
     while (1)
     {
         sem_wait(&sem_ready);
