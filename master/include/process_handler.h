@@ -1,5 +1,5 @@
-#ifndef READY_EXEC_HANDLER
-#define READY_EXEC_HANDLER
+#ifndef PROCESS_HANDLER
+#define PROCESS_HANDLER
 
 #include <stddef.h>
 #include <semaphore.h>
@@ -8,10 +8,11 @@
 #include <string.h>
 #include <utils/paquetes.h>
 #include <utils/op_codes.h>
+#include <master_util.h>
 
-void *ready_exec_handler(void *arg);
+void *process_handler(void *arg);
+void *esperar_respuesta(void *arg);
 void *actualizador();
-query *obtener_query(t_list *list);
-worker *buscar_worker_libre();
+void *desalojador();
 
 #endif

@@ -19,7 +19,7 @@ void *master_network_handler(void *arg)
             char *archivo = list_get(list, 0);
             char *prioridad = list_get(list, 1);
 
-            query *query = malloc(sizeof(*query));
+            query_t *query = malloc(sizeof(*query));
             query->id = asign_query_id();
             query->pc = 0;
             query->file = archivo;
@@ -34,13 +34,14 @@ void *master_network_handler(void *arg)
 
             log_info(logger_master, "## Se conecta un Query Control para ejecutar la Query <%s> con prioridad <%s>", archivo, prioridad);
             log_info(logger_master, "## Id asignado: <%d>. Nivel multiprocesamiento <CANTIDAD>", query->id);
+
             break;
         }
         case HANDSHAKE_WORKER_MASTER:
         {
             char *id = list_get(list, 0);
 
-            worker *worker = malloc(sizeof(*worker));
+            worker_t *worker = malloc(sizeof(*worker));
             worker->id = id;
             worker->fd = connection_socket;
 

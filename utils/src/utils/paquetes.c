@@ -145,27 +145,34 @@ buffer_t *obtener_siguiente_item(paquete_t *paquete)
 }
 op_code get_opcode(t_list *list)
 {
-    return *(op_code *)list_remove(list, 0);
+    int *ptr = list_remove(list, 0);
+    op_code code = *ptr;
+    free(ptr);
+    return code;
 }
 
 t_list *recv_package(int socket, t_log *logger)
 {
-    t_list *lista = list_create();
-
-    paquete_t *paquete = recibir_paquete(socket, logger);
-
-    int *codigo = malloc(sizeof(int));
-    *codigo = paquete->codigo_operacion;
-    list_add(lista, codigo);
-
-    buffer_t *item = obtener_siguiente_item(paquete);
-    while (item != NULL)
     {
-        list_add(lista, item);
-        item = obtener_siguiente_item(paquete);
+        t_list *lista = list_create();
+
+        paquete_t *paquete = recibir_paquete(socket, logger);
+
+        int *codigo = malloc(sizeof(int));
+        *codigo = paquete->codigo_operacion;
+        list_add(lista, codigo);
+
+        buffer_t *item = obtener_siguiente_item(paquete);
+        while (item != NULL)
+        {
+            char *dato = malloc(item->size);
+            memcpy(dato, item->stream, item->size);
+            list_add(lista, dato);
+
+            item = obtener_siguiente_item(paquete);
+        }
+
+        destruir_paquete(paquete);
+        return lista;
     }
-
-    destruir_paquete(paquete);
-
-    return lista;
 }
