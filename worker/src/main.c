@@ -13,15 +13,15 @@ int main(int argc, char *argv[])
 
 
 /*
-int master_socket = connect_to_server(IP_MASTER, PUERTO_MASTER, logger_worker);
-// Enviar handshake al Master
-paquete_t *handshake = crear_paquete(HANDSHAKE_WORKER_MASTER);
-agregar_a_paquete(handshake, argv[1], sizeof(argv[1]));
-enviar_paquete(master_socket, handshake);
+    int master_socket = connect_to_server(IP_MASTER, PUERTO_MASTER, logger_worker);
+    // Enviar handshake al Master
+    paquete_t *handshake = crear_paquete(HANDSHAKE_WORKER_MASTER);
+    agregar_a_paquete(handshake, argv[1], sizeof(argv[1]));
+    enviar_paquete(master_socket, handshake);
 
-char ack[4];
-recv(master_socket, ack, 4, MSG_WAITALL);
-log_info(logger_worker, "## handshake con master realizado");
+    char ack[4];
+    recv(master_socket, ack, 4, MSG_WAITALL);
+    log_info(logger_worker, "## handshake con master realizado");
 */
 
 // Conexiones con Storage y Master
@@ -38,8 +38,8 @@ log_info(logger_worker, "## handshake con master realizado");
     
     // Espera de Query (Paqute: nombre del archivo, query ID, PC)
     paquete_t *paquete_query = recibir_paquete(master_socket, logger_worker);
-    if (paquete_query->codigo_operacion != ASIGNACION_WORKER) {
-        log_error(logger_worker, "Se recibio un paquete con un op_code distinto a %d", ASIGNACION_WORKER);
+    if (paquete_query->codigo_operacion != SOLICITUD_EJECUCION) {
+        log_error(logger_worker, "Se recibio un paquete con un op_code distinto a %d", SOLICITUD_EJECUCION);
         exit(EXIT_FAILURE);
     }
 

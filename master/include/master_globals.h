@@ -20,6 +20,13 @@ extern pthread_mutex_t mutex_worker;
 
 typedef struct
 {
+    int fd;
+    char *id;
+    bool is_free;
+} worker;
+
+typedef struct
+{
     int id;
     int pc;
     int *controler_socket;
@@ -28,11 +35,5 @@ typedef struct
     worker *worker;
 } query;
 
-typedef struct
-{
-    int fd;
-    char *id;
-    bool is_free;
-} worker;
 
 #endif

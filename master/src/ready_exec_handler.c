@@ -7,18 +7,18 @@ void *ready_exec_handler(void *arg)
         pthread_t actualizador_de_prioridad;
         pthread_create(actualizador_de_prioridad, NULL, &actualizador, NULL);
     }
-
+    
     while (1)
     {
         sem_wait(&sem_ready);
         sem_wait(&sem_workers);
-
+        
         query *query = obtener_query(querys_ready);
         worker *worker = buscar_worker_libre();
-
+        
         hacer_par_query_worker(query, worker);
         solicitar_ejecucion_query(query, worker->fd);
-
+        
         esperar_respuesta(worker->fd);
     }
     return 0;
@@ -73,7 +73,7 @@ query *obtener_query(t_list *list)
 
 worker *buscar_worker_libre()
 {
-    pthread_lock(&mutex_worker);
+    // pthread_lock(&mutex_worker);
     t_list_iterator *iterator = list_iterator_create(workers);
     while (list_iterator_has_next(iterator))
     {
@@ -104,7 +104,7 @@ solicitar_ejecucion_query(query *query, int socket)
     agregar_a_paquete(socket, &query->id, sizeof(int));
     agregar_a_paquete(socket, &query->pc, sizeof(int));
     agregar_a_paquete(socket, query->file, sizeof(query->file));
-    enviar_paquete(socket, paquete);
+    enviar_paquete(socket, paquete, logger_master, "Worker");
 }
 
 esperar_respuesta(int socket)

@@ -27,7 +27,8 @@ void *master_network_handler(void *arg)
             query->controler_socket = socket_ptr;
 
             list_add(querys_ready, query);
-            send(connection_socket, "ACK", 4, 0);
+            enviar_resultado_handshake(connection_socket, (resultado_t){OK}, logger_master);
+            // send(connection_socket, "ACK", 4, 0);
 
             sem_post(&sem_ready);
 
@@ -44,14 +45,18 @@ void *master_network_handler(void *arg)
             worker->fd = connection_socket;
 
             list_add(workers, worker);
-            send(connection_socket, "ACK", 4, 0);
+            // send(connection_socket, "ACK", 4, 0);
+            enviar_resultado_handshake(connection_socket, (resultado_t){OK}, logger_master);
 
             sem_post(&sem_workers);
 
             log_info(logger_master, "## Se conecta el Worker <%s> - Cantidad total de Workers: <%d>", id, list_size(workers));
             break;
         }
-        default:;
+        default:
+            log_warning(logger_master, "Se recibio un paquete no identificado correctamente");
+            enviar_resultado_handshake(connection_socket, (resultado_t){ERROR}, logger_master);
+            break;;
         }
     }
 }

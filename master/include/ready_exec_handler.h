@@ -10,5 +10,8 @@
 #include <utils/op_codes.h>
 
 void *ready_exec_handler(void *arg);
+void *actualizador();
+query *obtener_query(t_list *list);
+worker *buscar_worker_libre();
 
 #endif
