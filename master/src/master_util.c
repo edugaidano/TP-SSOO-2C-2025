@@ -12,6 +12,10 @@ void finalizar_query(query_t *query)
     list_remove_element(querys_exec, query);
     pthread_mutex_unlock(&mutex_exec);
 
+    // TODO destruir la query;
+
+    log_info(logger_master, "## Se terminó la Query <%d> en el Worker <%s>", query->id, query->worker->id);
+
     notificar_finalizacion(query);
 }
 
@@ -46,6 +50,8 @@ void notificar_read(query_t *query, char *file, char *tag, char *contenido)
     agregar_a_paquete(paquete, tag, string_length(tag) + 1);
     agregar_a_paquete(paquete, contenido, string_length(contenido) + 1);
     enviar_paquete(query->worker->fd, paquete);
+
+    log_info(logger_master, "## Se envía un mensaje de lectura de la Query <%d> en el Worker <%s> al Query Control", query->id, query->worker->id);
 }
 
 void liberar_worker(worker_t *worker)
@@ -53,16 +59,14 @@ void liberar_worker(worker_t *worker)
     pthread_mutex_lock(&mutex_workers);
     worker->is_free = true;
     pthread_mutex_unlock(&mutex_workers);
-
-    sem_post(&sem_workers);
 }
 
-query_t *obtener_query(t_list *list)
+query_t *obtener_query()
 {
     if (strcmp(ALGORITMO_PLANIFICACION, "FIFO") == 0)
     {
         pthread_mutex_lock(&mutex_ready);
-        query_t *query = list_remove(list, 0);
+        query_t *query = list_remove(querys_ready, 0);
         pthread_mutex_unlock(&mutex_ready);
         return query;
     }
@@ -129,6 +133,7 @@ void solicitar_ejecucion_query(query_t *query, int socket)
     agregar_a_paquete(paquete, &query->pc, sizeof(int));
     agregar_a_paquete(paquete, query->file, strlen(query->file) + 1);
     enviar_paquete(socket, paquete);
+    log_info(logger_master, "## Se envía la Query <%d> al Worker <%s>", query->id, query->worker->id);
 }
 
 query_t *buscar_victima()

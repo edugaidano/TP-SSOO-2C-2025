@@ -20,7 +20,7 @@ void *process_handler(void *arg)
         sem_wait(&sem_ready);
         sem_wait(&sem_workers);
 
-        query_t *query = obtener_query(querys_ready);
+        query_t *query = obtener_query();
         worker_t *worker = buscar_worker_libre();
 
         hacer_par_query_worker(query, worker);
@@ -65,8 +65,17 @@ void *esperar_respuesta(void *arg)
     case QUERY_DESALOJADA:
     {
         int pc = atoi(list_get(list, 0));
+        worker_t *worker = query->worker;
+        query_t *query_desalojada = query;
+
         liberar_worker(query->worker);
         liberar_query(query, pc);
+
+        query_t *query = obtener_query();
+        hacer_par_query_worker(query, worker);
+
+        log_info(logger_master, "## Se desaloja la Query <%d> (<%d>) y comienza a ejecutar la Query <%d> (<%d>) en el Worker <%s>", query_desalojada->id, query_desalojada->prioridad, query->id, query->prioridad, worker->id);
+        solicitar_ejecucion_query(query, query->worker->fd);
         break;
     }
     default:;
@@ -89,6 +98,7 @@ void *actualizador()
         if (query->prioridad > 0)
         {
             query->prioridad--;
+            log_info(logger_master, "##<%d> Cambio de prioridad: <%d> - <%d>", query->id, query->prioridad++, query->prioridad);
         }
     }
 
