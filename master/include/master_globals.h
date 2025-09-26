@@ -16,7 +16,21 @@ extern sem_t sem_ready;
 extern sem_t sem_workers;
 extern pthread_mutex_t mutex_ready;
 extern pthread_mutex_t mutex_exec;
-extern pthread_mutex_t mutex_worker;
+extern pthread_mutex_t mutex_workers;
+extern pthread_cond_t all_workers_busy;
+
+typedef enum
+{
+    READ,
+    FINALIZACION
+} notif_query_control;
+
+typedef struct
+{
+    int fd;
+    char *id;
+    bool is_free;
+} worker_t;
 
 typedef struct
 {
@@ -25,14 +39,7 @@ typedef struct
     int *controler_socket;
     char *file;
     char *prioridad;
-    worker *worker;
-} query;
-
-typedef struct
-{
-    int fd;
-    char *id;
-    bool is_free;
-} worker;
+    worker_t *worker;
+} query_t;
 
 #endif
