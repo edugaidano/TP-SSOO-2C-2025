@@ -35,38 +35,40 @@ int main(int argc, char *argv[])
 
     // Iniciar memoria interna
     init_memoria();
-    
-    // Espera de Query (Paqute: nombre del archivo, query ID, PC)
-    paquete_t *paquete_query = recibir_paquete(master_socket, logger_worker);
-    if (paquete_query->codigo_operacion != SOLICITUD_EJECUCION) {
-        log_error(logger_worker, "Se recibio un paquete con un op_code distinto a %d", SOLICITUD_EJECUCION);
-        exit(EXIT_FAILURE);
-    }
+    t_list* instrucciones;
 
-    buffer_t *buffer = obtener_siguiente_item(paquete_query);   
-    char *path = string_from_format( "%s/%s", PATH_SCRIPTS, (char*){buffer->stream});
-    liverar_buffer(buffer);
-
-    buffer = obtener_siguiente_item(paquete_query);
-    char *query_id = string_duplicate((char*){buffer->stream});
-    liverar_buffer(buffer);
-
-    buffer = obtener_siguiente_item(paquete_query);
-    int pc = *(int*){buffer->stream};
-    liverar_buffer(buffer);
-
-    destruir_paquete(paquete_query);
-
-    log_info(logger_worker, "## Query %s: Se recibe la Query. El path de operaciones es: %s", query_id, path);
-
-    t_list* instrucciones = parsear_archivo(path);
-    free(path);
-
-    bool fin = false;
-    // Lectura de instrucciones
-    while (list_size(instrucciones) > pc && !fin) {
-        t_instrucion* instruccion = list_get(instrucciones, pc);
-        log_info(logger_worker, "## Query %s: FETCH - Program Counter: %d - %s", query_id, pc, instruccion->identificador);
+    while (true) {
+        // Espera de Query (Paqute: nombre del archivo, query ID, PC)
+        paquete_t *paquete_query = recibir_paquete(master_socket, logger_worker);
+        if (paquete_query->codigo_operacion != SOLICITUD_EJECUCION) {
+            log_error(logger_worker, "Se recibio un paquete con un op_code distinto a %d", SOLICITUD_EJECUCION);
+            exit(EXIT_FAILURE);
+        }
+        
+        buffer_t *buffer = obtener_siguiente_item(paquete_query);   
+        char *path = string_from_format( "%s/%s", PATH_SCRIPTS, (char*){buffer->stream});
+        liverar_buffer(buffer);
+        
+        buffer = obtener_siguiente_item(paquete_query);
+        char *query_id = string_duplicate((char*){buffer->stream});
+        liverar_buffer(buffer);
+        
+        buffer = obtener_siguiente_item(paquete_query);
+        int pc = *(int*){buffer->stream};
+        liverar_buffer(buffer);
+        
+        destruir_paquete(paquete_query);
+        
+        log_info(logger_worker, "## Query %s: Se recibe la Query. El path de operaciones es: %s", query_id, path);
+        
+        instrucciones = parsear_archivo(path);
+        free(path);
+        
+        bool fin = false;
+        // Lectura de instrucciones
+        while (list_size(instrucciones) > pc && !fin) {
+            t_instrucion* instruccion = list_get(instrucciones, pc);
+            log_info(logger_worker, "## Query %s: FETCH - Program Counter: %d - %s", query_id, pc, instruccion->identificador);
 
         switch (instruccion->copi) {
             case CREATE:
@@ -97,12 +99,22 @@ int main(int argc, char *argv[])
                 interpretar_END(instruccion, query_id, master_socket);
                 fin = true; // Sale del while y elimina la query
                 break;
+            }
+            
+            // Idea para manejar interrupciones desde el worker
+            send(master_socket, &(op_code){CONSULTA_INTERRUPCION}, sizeof(int), 0); // Podria ser un paquete
+            bool resultado;
+            recv(master_socket, &resultado, sizeof(bool), MSG_WAITALL); // True: es necesario interrumpir la ejecucion, False: se continua con normalidad        
+            if(resultado) {
+                break; // sale del while y espera un nuevo query (Aqui se puede agregar un paquete si es necesario para el master)
+            }
+            
+            pc ++;
         }
-
-        pc ++;
+        
+        list_destroy_and_destroy_elements(instrucciones, destruir_instrucciones);
     }
-
-    list_destroy_and_destroy_elements(instrucciones, destruir_instrucciones);
+    
 
     // Liveracion de Recursos
     config_destroy(config_worker);
