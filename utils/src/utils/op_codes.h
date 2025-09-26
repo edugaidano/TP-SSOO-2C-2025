@@ -16,4 +16,10 @@ typedef enum
     QUERY_DESALOJADA
 } op_code;
 
+typedef enum
+{
+    READ,
+    FINALIZACION
+} notif_query_control;
+
 #endif

@@ -55,7 +55,10 @@ void *esperar_respuesta(void *arg)
     case NOTIF_READ:
     {
         char *contenido = list_get(list, 0);
-        notificar_read(query, contenido);
+        char *file = list_get(list, 1);
+        char *tag = list_get(list, 2);
+        notificar_read(query, file, tag, contenido);
+        list_destroy_and_destroy_elements(list, &element_destroyer);
         esperar_respuesta(&query);
         break;
     }
@@ -68,6 +71,8 @@ void *esperar_respuesta(void *arg)
     }
     default:;
     }
+
+    list_destroy_and_destroy_elements(list, &element_destroyer);
     return 0;
 }
 

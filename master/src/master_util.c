@@ -22,6 +22,7 @@ void liberar_query(query_t *query, int pc)
     pthread_mutex_unlock(&mutex_exec);
 
     pthread_mutex_lock(&mutex_ready);
+    query->pc = pc;
     list_add(querys_ready, query);
     pthread_mutex_unlock(&mutex_ready);
 
@@ -36,12 +37,14 @@ void notificar_finalizacion(query_t *query)
     enviar_paquete(query->worker->fd, paquete);
 }
 
-void notificar_read(query_t *query, char *contenido)
+void notificar_read(query_t *query, char *file, char *tag, char *contenido)
 {
     int mensaje = READ;
     paquete_t *paquete = crear_paquete(NOTIF_QUERY_CONTROL);
     agregar_a_paquete(paquete, &mensaje, sizeof(int));
-    agregar_a_paquete(paquete, contenido, sizeof(contenido));
+    agregar_a_paquete(paquete, file, string_length(file) + 1);
+    agregar_a_paquete(paquete, tag, string_length(tag) + 1);
+    agregar_a_paquete(paquete, contenido, string_length(contenido) + 1);
     enviar_paquete(query->worker->fd, paquete);
 }
 
@@ -124,7 +127,7 @@ void solicitar_ejecucion_query(query_t *query, int socket)
     paquete_t *paquete = crear_paquete(SOLICITUD_EJECUCION);
     agregar_a_paquete(paquete, &query->id, sizeof(int));
     agregar_a_paquete(paquete, &query->pc, sizeof(int));
-    agregar_a_paquete(paquete, query->file, sizeof(query->file));
+    agregar_a_paquete(paquete, query->file, strlen(query->file) + 1);
     enviar_paquete(socket, paquete);
 }
 
@@ -148,4 +151,10 @@ void solicitar_desalojo(query_t *victima)
 {
     paquete_t *paquete = crear_paquete(DESALOJO_QUERY);
     enviar_paquete(victima->worker->fd, paquete);
+}
+
+void *element_destroyer(void *arg)
+{
+    free(arg);
+    return 0;
 }

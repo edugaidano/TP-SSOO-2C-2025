@@ -32,7 +32,7 @@ void *master_network_handler(void *arg)
             sem_post(&sem_ready);
 
             log_info(logger_master, "## Se conecta un Query Control para ejecutar la Query <%s> con prioridad <%s>", archivo, prioridad);
-            log_info(logger_master, "## Id asignado: <%d>. Nivel multiprocesamiento <CANTIDAD>", query->id);
+            log_info(logger_master, "## Id asignado: <%d>. Nivel multiprocesamiento <%d>", query->id, list_size(workers));
 
             break;
         }

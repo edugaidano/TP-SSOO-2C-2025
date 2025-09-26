@@ -19,12 +19,6 @@ extern pthread_mutex_t mutex_exec;
 extern pthread_mutex_t mutex_workers;
 extern pthread_cond_t all_workers_busy;
 
-typedef enum
-{
-    READ,
-    FINALIZACION
-} notif_query_control;
-
 typedef struct
 {
     int fd;

@@ -1,5 +1,40 @@
 #include <query_main.h>
 
+void *element_destroyer(void *arg)
+{
+    free(arg);
+    return 0;
+}
+
+void recibir_mensaje(int socket)
+{
+    t_list *list = recv_package(socket, logger_query_control);
+    op_code opcode = get_opcode(list);
+
+    switch (opcode)
+    {
+    case NOTIF_QUERY_CONTROL:
+        notif_query_control notif = *(notif_query_control *)list_get(list, 0);
+        switch (notif)
+        {
+        case FINALIZACION:
+            log_info(logger_query_control, "## Query finalizada - <La ejecución finalizó correctamente>");
+            list_destroy_and_destroy_elements(list, &element_destroyer);
+            break;
+        case READ:
+            char *file = (char *)list_get(list, 1);
+            char *tag = (char *)list_get(list, 2);
+            char *contenido = (char *)list_get(list, 3);
+            log_info(logger_query_control, "## Lectura realizada: Archivo <%s:%s>, contenido: <%s>", file, tag, contenido);
+            list_destroy_and_destroy_elements(list, &element_destroyer);
+            recibir_mensaje(socket);
+            break;
+        default:;
+        }
+    default:;
+    }
+}
+
 int main(int argc, char *argv[])
 {
     if (argc < 4)
@@ -23,8 +58,6 @@ int main(int argc, char *argv[])
     recv(socket_master, ack, 4, MSG_WAITALL);
     log_info(logger_query_control, "## handshake con master realizado");
 
-    recv(socket_master, ack, 4, MSG_WAITALL);
-    log_info(logger_query_control, "## Query Finalizada - <MOTIVO>");
-
+    recibir_mensaje(socket_master);
     return 0;
 }
