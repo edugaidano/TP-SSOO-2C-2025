@@ -23,11 +23,16 @@ void enviar_paquete(int socket, paquete_t *paquete)
     destruir_paquete(paquete);
 }
 
-void destruir_paquete(paquete_t *paquete)
+void destruir_paquete(paquete_t* paquete) 
 {
-    free(paquete->buffer->stream);
-    free(paquete->buffer);
+    liverar_buffer(paquete->buffer);
     free(paquete);
+}
+
+void liverar_buffer(buffer_t* buffer) 
+{
+    free(buffer->stream);
+    free(buffer);
 }
 
 void agregar_a_paquete(paquete_t *paquete, void *valor, int size)
