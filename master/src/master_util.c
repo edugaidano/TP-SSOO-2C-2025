@@ -38,7 +38,7 @@ void notificar_finalizacion(query_t *query)
     int mensaje = FINALIZACION;
     paquete_t *paquete = crear_paquete(NOTIF_QUERY_CONTROL);
     agregar_a_paquete(paquete, &mensaje, sizeof(int));
-    enviar_paquete(query->worker->fd, paquete);
+    enviar_paquete(query->worker->fd, paquete, logger_master, "Query Control");
 }
 
 void notificar_read(query_t *query, char *file, char *tag, char *contenido)
@@ -131,9 +131,8 @@ void solicitar_ejecucion_query(query_t *query, int socket)
     paquete_t *paquete = crear_paquete(SOLICITUD_EJECUCION);
     agregar_a_paquete(paquete, &query->id, sizeof(int));
     agregar_a_paquete(paquete, &query->pc, sizeof(int));
-    agregar_a_paquete(paquete, query->file, strlen(query->file) + 1);
+    agregar_a_paquete(paquete, query->file, sizeof(query->file));
     enviar_paquete(socket, paquete);
-    log_info(logger_master, "## Se envía la Query <%d> al Worker <%s>", query->id, query->worker->id);
 }
 
 query_t *buscar_victima()
@@ -155,7 +154,7 @@ query_t *buscar_victima()
 void solicitar_desalojo(query_t *victima)
 {
     paquete_t *paquete = crear_paquete(DESALOJO_QUERY);
-    enviar_paquete(victima->worker->fd, paquete);
+    enviar_paquete(victima->worker->fd, paquete, logger_master, "Worker");
 }
 
 void element_destroyer(void *arg)

@@ -6,7 +6,7 @@ void init(char *config_name)
     log_info(logger_master, "log inicializado correctamente");
 
     char *config_path = build_config_path(config_name, logger_master);
-    t_config *config_master = config_create(config_path);
+    config_master = config_create(config_path);
 
     PUERTO_ESCUCHA = config_get_string_value(config_master, "PUERTO_ESCUCHA");
     ALGORITMO_PLANIFICACION = config_get_string_value(config_master, "ALGORITMO_PLANIFICACION");
