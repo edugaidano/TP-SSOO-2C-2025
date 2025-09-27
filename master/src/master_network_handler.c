@@ -32,7 +32,7 @@ void *master_network_handler(void *arg)
 
             sem_post(&sem_ready);
 
-            log_info(logger_master, "## Se conecta un Query Control para ejecutar la Query <%s> con prioridad <%s>", archivo, prioridad);
+            log_info(logger_master, "## Se conecta un Query Control para ejecutar la Query <%s> con prioridad <%d>", archivo, prioridad);
             log_info(logger_master, "## Id asignado: <%d>. Nivel multiprocesamiento <%d>", query->id, list_size(workers));
 
             break;
@@ -57,8 +57,9 @@ void *master_network_handler(void *arg)
         default:
             log_warning(logger_master, "Se recibio un paquete no identificado correctamente");
             enviar_resultado_handshake(connection_socket, (resultado_t){ERROR}, logger_master);
-            break;;
+            break;
+            ;
         }
-        list_destroy_and_destroy_elements(list, element_destroyer);
+        list_destroy_and_destroy_elements(list, free);
     }
 }

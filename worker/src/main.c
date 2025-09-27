@@ -11,66 +11,70 @@ int main(int argc, char *argv[])
     // Iniciar Logs y Configs
     init(argv[1]);
 
+    /*
+        int master_socket = connect_to_server(IP_MASTER, PUERTO_MASTER, logger_worker);
+        // Enviar handshake al Master
+        paquete_t *handshake = crear_paquete(HANDSHAKE_WORKER_MASTER);
+        agregar_a_paquete(handshake, argv[1], sizeof(argv[1]));
+        enviar_paquete(master_socket, handshake);
 
-/*
-    int master_socket = connect_to_server(IP_MASTER, PUERTO_MASTER, logger_worker);
-    // Enviar handshake al Master
-    paquete_t *handshake = crear_paquete(HANDSHAKE_WORKER_MASTER);
-    agregar_a_paquete(handshake, argv[1], sizeof(argv[1]));
-    enviar_paquete(master_socket, handshake);
+        char ack[4];
+        recv(master_socket, ack, 4, MSG_WAITALL);
+        log_info(logger_worker, "## handshake con master realizado");
+    */
 
-    char ack[4];
-    recv(master_socket, ack, 4, MSG_WAITALL);
-    log_info(logger_worker, "## handshake con master realizado");
-*/
+    // Conexiones con Storage y Master
 
-// Conexiones con Storage y Master
     int storage_socket = connect_to_server(IP_STORAGE, PUERTO_STORAGE, logger_worker);
     enviar_handshake(HANDSHAKE_WORKER_STORAGE, storage_socket, "Storage", argv[2]);
     verificar_resultado_handshake(storage_socket, "Storage");
-    
+
     int master_socket = connect_to_server(IP_MASTER, PUERTO_MASTER, logger_worker);
     enviar_handshake(HANDSHAKE_WORKER_MASTER, master_socket, "Master", argv[2]);
     verificar_resultado_handshake(master_socket, "Master");
 
     // Iniciar memoria interna
     init_memoria();
-    t_list* instrucciones;
+    t_list *instrucciones;
 
-    while (true) {
+    while (true)
+    {
         // Espera de Query (Paqute: nombre del archivo, query ID, PC)
         paquete_t *paquete_query = recibir_paquete(master_socket, logger_worker);
-        if (paquete_query->codigo_operacion != SOLICITUD_EJECUCION) {
+        if (paquete_query->codigo_operacion != SOLICITUD_EJECUCION)
+        {
             log_error(logger_worker, "Se recibio un paquete con un op_code distinto a %d", SOLICITUD_EJECUCION);
             exit(EXIT_FAILURE);
         }
-        
-        buffer_t *buffer = obtener_siguiente_item(paquete_query);   
-        char *path = string_from_format( "%s/%s", PATH_SCRIPTS, (char*){buffer->stream});
+
+        buffer_t *buffer = obtener_siguiente_item(paquete_query);
+        char *path = string_from_format("%s/%s", PATH_SCRIPTS, (char *){buffer->stream});
         liverar_buffer(buffer);
-        
+
         buffer = obtener_siguiente_item(paquete_query);
-        char *query_id = string_duplicate((char*){buffer->stream});
+        char *query_id = string_duplicate((char *){buffer->stream});
         liverar_buffer(buffer);
-        
+
         buffer = obtener_siguiente_item(paquete_query);
-        int pc = *(int*){buffer->stream};
+        int pc = *(int *){buffer->stream};
         liverar_buffer(buffer);
-        
+
         destruir_paquete(paquete_query);
-        
+
         log_info(logger_worker, "## Query %s: Se recibe la Query. El path de operaciones es: %s", query_id, path);
-        
+
         instrucciones = parsear_archivo(path);
         free(path);
-        
+
         bool fin = false;
         // Lectura de instrucciones
-        while (list_size(instrucciones) > pc && !fin) {
-            t_instrucion* instruccion = list_get(instrucciones, pc);
+        while (list_size(instrucciones) > pc && !fin)
+        {
+            t_instrucion *instruccion = list_get(instrucciones, pc);
             log_info(logger_worker, "## Query %s: FETCH - Program Counter: %d - %s", query_id, pc, instruccion->identificador);
 
-        switch (instruccion->copi) {
+            switch (instruccion->copi)
+            {
             case CREATE:
                 interpretar_CREATE(instruccion, query_id, storage_socket);
                 break;
@@ -87,7 +91,7 @@ int main(int argc, char *argv[])
                 interpretar_TRUNCATE(instruccion, query_id, storage_socket);
                 break;
             case TAG:
-                interpretar_TAG(instruccion, query_id,storage_socket);
+                interpretar_TAG(instruccion, query_id, storage_socket);
                 break;
             case READ:
                 interpretar_READ(instruccion, query_id, storage_socket, master_socket);
@@ -95,26 +99,26 @@ int main(int argc, char *argv[])
             case WRITE:
                 interpretar_WRITE(instruccion, query_id, storage_socket);
                 break;
-            default:        //END
+            default: // END
                 interpretar_END(instruccion, query_id, master_socket);
                 fin = true; // Sale del while y elimina la query
                 break;
             }
-            
+
             // Idea para manejar interrupciones desde el worker
             send(master_socket, &(op_code){CONSULTA_INTERRUPCION}, sizeof(int), 0); // Podria ser un paquete
             bool resultado;
-            recv(master_socket, &resultado, sizeof(bool), MSG_WAITALL); // True: es necesario interrumpir la ejecucion, False: se continua con normalidad        
-            if(resultado) {
+            recv(master_socket, &resultado, sizeof(bool), MSG_WAITALL); // True: es necesario interrumpir la ejecucion, False: se continua con normalidad
+            if (resultado)
+            {
                 break; // sale del while y espera un nuevo query (Aqui se puede agregar un paquete si es necesario para el master)
             }
-            
-            pc ++;
+
+            pc++;
         }
-        
+
         list_destroy_and_destroy_elements(instrucciones, destruir_instrucciones);
     }
-    
 
     // Liveracion de Recursos
     config_destroy(config_worker);

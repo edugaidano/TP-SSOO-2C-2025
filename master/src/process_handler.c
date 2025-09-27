@@ -8,13 +8,13 @@ void *process_handler(void *arg)
         pthread_create(&actualizador_de_prioridad, NULL, &actualizador, NULL);
         pthread_detach(actualizador_de_prioridad);
     }
-    
+
     if (string_equals_ignore_case(ALGORITMO_PLANIFICACION, "PRIORIDADES"))
     {
         pthread_t hilo_desalojador;
         pthread_create(&hilo_desalojador, NULL, &desalojador, NULL);
     }
-    
+
     while (1)
     {
         sem_wait(&sem_ready);
@@ -58,7 +58,7 @@ void *esperar_respuesta(void *arg)
         char *file = list_get(list, 1);
         char *tag = list_get(list, 2);
         notificar_read(query, file, tag, contenido);
-        list_destroy_and_destroy_elements(list, element_destroyer);
+        list_destroy_and_destroy_elements(list, free);
         esperar_respuesta(&query);
         break;
     }
@@ -81,7 +81,7 @@ void *esperar_respuesta(void *arg)
     default:;
     }
 
-    list_destroy_and_destroy_elements(list, &element_destroyer);
+    list_destroy_and_destroy_elements(list, free);
     return 0;
 }
 
@@ -98,7 +98,7 @@ void *actualizador()
         if (query->prioridad > 0)
         {
             query->prioridad--;
-            log_info(logger_master, "##<%d> Cambio de prioridad: <%d> - <%d>", query->id, query->prioridad++, query->prioridad);
+            log_info(logger_master, "##<%d> Cambio de prioridad: <%d> - <%d>", query->id, (query->prioridad + 1), query->prioridad);
         }
     }
 

@@ -16,26 +16,27 @@ paquete_t *crear_paquete(op_code codigo_operacion)
     return paquete;
 }
 
-void enviar_paquete(int socket, paquete_t *paquete, t_log* logger, char *destinatario)
+void enviar_paquete(int socket, paquete_t *paquete, t_log *logger)
 {
     void *paquete_serializado = serializar_paquete(paquete);
-    
-    if (send(socket, paquete_serializado, espacio_paquete_serializado(paquete), 0) == -1) {
-        log_error(logger, "No se pudo enviar el paquete al %s", destinatario);
+
+    if (send(socket, paquete_serializado, espacio_paquete_serializado(paquete), 0) == -1)
+    {
+        log_error(logger, "No se pudo enviar el paquete");
         abort();
     }
-    
+
     destruir_paquete(paquete);
     free(paquete_serializado);
 }
 
-void destruir_paquete(paquete_t* paquete) 
+void destruir_paquete(paquete_t *paquete)
 {
     liverar_buffer(paquete->buffer);
     free(paquete);
 }
 
-void liverar_buffer(buffer_t* buffer) 
+void liverar_buffer(buffer_t *buffer)
 {
     free(buffer->stream);
     free(buffer);

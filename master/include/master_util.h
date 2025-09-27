@@ -16,6 +16,5 @@ void hacer_par_query_worker(query_t *query, worker_t *worker);
 void solicitar_ejecucion_query(query_t *query, int socket);
 query_t *buscar_victima();
 void solicitar_desalojo(query_t *victima);
-void element_destroyer(void *arg);
 
 #endif
