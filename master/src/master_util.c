@@ -158,8 +158,7 @@ void solicitar_desalojo(query_t *victima)
     enviar_paquete(victima->worker->fd, paquete);
 }
 
-void *element_destroyer(void *arg)
+void element_destroyer(void *arg)
 {
     free(arg);
-    return 0;
 }

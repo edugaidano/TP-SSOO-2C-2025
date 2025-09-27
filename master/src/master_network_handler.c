@@ -16,8 +16,8 @@ void *master_network_handler(void *arg)
         {
         case HANDSHAKE_QUERY_MASTER:
         {
-            char *archivo = list_get(list, 0);
-            char *prioridad = list_get(list, 1);
+            char *archivo = string_duplicate(list_get(list, 0));
+            int prioridad = atoi(list_get(list, 1));
 
             query_t *query = malloc(sizeof(*query));
             query->id = asign_query_id();
@@ -38,7 +38,7 @@ void *master_network_handler(void *arg)
         }
         case HANDSHAKE_WORKER_MASTER:
         {
-            char *id = list_get(list, 0);
+            char *id = string_duplicate(list_get(list, 0));
 
             worker_t *worker = malloc(sizeof(*worker));
             worker->id = id;
@@ -54,5 +54,6 @@ void *master_network_handler(void *arg)
         }
         default:;
         }
+        list_destroy_and_destroy_elements(list, element_destroyer);
     }
 }

@@ -32,7 +32,7 @@ typedef struct
     int pc;
     int *controler_socket;
     char *file;
-    char *prioridad;
+    int prioridad;
     worker_t *worker;
 } query_t;
 
