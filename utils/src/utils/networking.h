@@ -21,12 +21,11 @@
 #include <utils/paquetes.h>
 #include <utils/op_codes.h>
 
-typedef enum {
+typedef enum
+{
     OK,
     ERROR
 } resultado_t;
-
-
 
 /**
  * @brief crea un servidor y levanta un socket
@@ -50,8 +49,5 @@ int accept_connection(int server_socket, t_log *log);
  * @returns el socket de la conexion si se conecta, -1 si no lo hace
  */
 int connect_to_server(char *IP, char *PORT, t_log *log);
-
-void enviar_resultado_handshake(int fd_conexion, resultado_t resultado, t_log* logger);
-resultado_t resultado_handshake(int fd_conexion, t_log* logger);
 
 #endif

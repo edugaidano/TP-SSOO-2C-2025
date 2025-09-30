@@ -9,5 +9,6 @@
 void *master_network_handler(void *arg);
 void *administrar_query(void *info_query);
 void *administrar_worker(void *fd);
+void *keepalive(void *arg);
 
 #endif

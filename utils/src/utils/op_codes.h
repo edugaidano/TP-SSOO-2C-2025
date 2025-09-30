@@ -18,7 +18,8 @@ typedef enum
     QUERY_FINALIZADA,
     NOTIF_QUERY_CONTROL,
     DESALOJO_QUERY,
-    QUERY_DESALOJADA
+    QUERY_DESALOJADA,
+    DESCONEXION = -1
 } op_code;
 
 typedef enum
@@ -26,5 +27,11 @@ typedef enum
     NOTIF_READ,
     NOTIF_FINAL
 } notif_query_control;
+
+typedef enum
+{
+    FINALIZACION_CORRECTA,
+    ERR_DESC_WORKER
+} razon_fin;
 
 #endif

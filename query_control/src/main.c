@@ -1,10 +1,5 @@
 #include <query_main.h>
 
-void element_destroyer(void *arg)
-{
-    free(arg);
-}
-
 void recibir_mensaje(int socket)
 {
     t_list *list = recv_package(socket, logger_query_control);
@@ -13,11 +8,22 @@ void recibir_mensaje(int socket)
     switch (opcode)
     {
     case NOTIF_QUERY_CONTROL:
-        notif_query_control notif = *(notif_query_control *)list_get(list, 0);
+        notif_query_control notif = get_opcode(list);
         switch (notif)
         {
         case NOTIF_FINAL:
-            log_info(logger_query_control, "## Query finalizada - <La ejecución finalizó correctamente>");
+            razon_fin razon = get_opcode(list);
+            switch (razon)
+            {
+            case FINALIZACION_CORRECTA:
+                log_info(logger_query_control, "## Query finalizada - <La ejecución finalizó correctamente>");
+                break;
+            case ERR_DESC_WORKER:
+                log_info(logger_query_control, "## Query finalizada - <La ejecución finalizó por desconexión del worker>");
+                break;
+            default:
+                break;
+            }
             break;
         case NOTIF_READ:
             char *file = (char *)list_get(list, 1);
@@ -26,11 +32,14 @@ void recibir_mensaje(int socket)
             log_info(logger_query_control, "## Lectura realizada: Archivo <%s:%s>, contenido: <%s>", file, tag, contenido);
             recibir_mensaje(socket);
             break;
-        default:;
+        default:
+            break;
         }
-    default:;
+        break;
+    default:
+        break;
     }
-    list_destroy_and_destroy_elements(list, element_destroyer);
+    list_destroy_and_destroy_elements(list, free);
 }
 
 int main(int argc, char *argv[])

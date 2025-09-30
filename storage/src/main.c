@@ -15,11 +15,11 @@ int main(int argc, char *argv[])
     while (1)
     {
         int worker_socket = accept_connection(server_socket, logger_storage);
-        //int *socket_ptr = malloc(sizeof(int));
-        //*socket_ptr = worker_socket;
+        int *socket_ptr = malloc(sizeof(int));
+        *socket_ptr = worker_socket;
 
         pthread_t client_thread;
-        pthread_create(&client_thread, NULL, &storage_worker_handler, &worker_socket);
+        pthread_create(&client_thread, NULL, &storage_worker_handler, socket_ptr);
         pthread_detach(client_thread);
     }
 

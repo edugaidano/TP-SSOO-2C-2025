@@ -7,6 +7,7 @@ int main(int argc, char *argv[])
         fprintf(stderr, "Pasar por parámetro el nombre del archivo .conf!\n");
         exit(EXIT_FAILURE);
     }
+    signal(SIGPIPE, SIG_IGN);
 
     init(argv[1]);
 
@@ -22,7 +23,7 @@ int main(int argc, char *argv[])
 
     while (1)
     {
-    } // para que no termine
+    }
 
     log_destroy(logger_master);
     config_destroy(config_master);

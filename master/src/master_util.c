@@ -6,39 +6,77 @@ int asign_query_id()
     return ++id;
 }
 
-void finalizar_query(query_t *query)
+void finalizar_query(query_t *query, razon_fin razon)
 {
     pthread_mutex_lock(&mutex_exec);
     list_remove_element(querys_exec, query);
+    query->is_exec = false;
     pthread_mutex_unlock(&mutex_exec);
 
     // TODO destruir la query;
 
-    log_info(logger_master, "## Se terminó la Query <%d> en el Worker <%s>", query->id, query->worker->id);
+    switch (razon)
+    {
+    case FINALIZACION_CORRECTA:
+        log_info(logger_master, "## Se terminó la Query <%d> en el Worker <%s>", query->id, query->worker->id);
+        break;
+    case ERR_DESC_WORKER:
+        log_info(logger_master, "## Se desconecta el Worker <%s> - Se finaliza la Query <%d> - Cantidad total de Workers: <%d> ", query->worker->id, query->id, (list_size(workers) - 1));
+        break;
+    default:
+        break;
+    }
 
-    notificar_finalizacion(query);
+    notificar_finalizacion(query, razon);
 }
 
 void liberar_query(query_t *query, int pc)
 {
     pthread_mutex_lock(&mutex_exec);
     list_remove_element(querys_exec, query);
+    query->worker = NULL;
+    query->is_exec = false;
     pthread_mutex_unlock(&mutex_exec);
 
     pthread_mutex_lock(&mutex_ready);
-    query->pc = pc;
+    if (pc != -1)
+    {
+        query->pc = pc;
+    }
     list_add(querys_ready, query);
     pthread_mutex_unlock(&mutex_ready);
 
     sem_post(&sem_ready);
 }
 
-void notificar_finalizacion(query_t *query)
+void destruir_query(query_t *query)
+{
+    if (query->is_exec)
+    {
+        pthread_mutex_lock(&mutex_exec);
+        list_remove_element(querys_exec, query);
+        pthread_mutex_unlock(&mutex_exec);
+    }
+    else
+    {
+        pthread_mutex_lock(&mutex_ready);
+        list_remove_element(querys_ready, query);
+        pthread_mutex_unlock(&mutex_ready);
+    }
+
+    close(query->controler_socket);
+    free(query->file);
+    free(query);
+}
+
+void notificar_finalizacion(query_t *query, razon_fin razon_enum)
 {
     int mensaje = NOTIF_FINAL;
+    int razon = razon_enum;
     paquete_t *paquete = crear_paquete(NOTIF_QUERY_CONTROL);
     agregar_a_paquete(paquete, &mensaje, sizeof(int));
-    enviar_paquete(query->worker->fd, paquete, logger_master);
+    agregar_a_paquete(paquete, &razon, sizeof(int));
+    enviar_paquete(query->controler_socket, paquete, logger_master);
 }
 
 void notificar_read(query_t *query, char *file, char *tag, char *contenido)
@@ -49,7 +87,7 @@ void notificar_read(query_t *query, char *file, char *tag, char *contenido)
     agregar_a_paquete(paquete, file, string_length(file) + 1);
     agregar_a_paquete(paquete, tag, string_length(tag) + 1);
     agregar_a_paquete(paquete, contenido, string_length(contenido) + 1);
-    enviar_paquete(query->worker->fd, paquete, logger_master);
+    enviar_paquete(query->controler_socket, paquete, logger_master);
 
     log_info(logger_master, "## Se envía un mensaje de lectura de la Query <%d> en el Worker <%s> al Query Control", query->id, query->worker->id);
 }
@@ -61,6 +99,16 @@ void liberar_worker(worker_t *worker)
     pthread_mutex_unlock(&mutex_workers);
 }
 
+void destruir_worker(worker_t *worker)
+{
+    pthread_mutex_lock(&mutex_workers);
+    list_remove_element(workers, worker);
+    pthread_mutex_unlock(&mutex_workers);
+
+    close(worker->fd);
+    free(worker->id);
+    free(worker);
+}
 query_t *obtener_query()
 {
     if (strcmp(ALGORITMO_PLANIFICACION, "FIFO") == 0)
@@ -116,6 +164,7 @@ void hacer_par_query_worker(query_t *query, worker_t *worker)
     pthread_mutex_lock(&mutex_workers);
     list_add(querys_exec, query);
     query->worker = worker;
+    query->is_exec = true;
     worker->is_free = false;
     pthread_mutex_unlock(&mutex_exec);
     pthread_mutex_unlock(&mutex_workers);
@@ -133,6 +182,8 @@ void solicitar_ejecucion_query(query_t *query, int socket)
     agregar_a_paquete(paquete, &query->pc, sizeof(int));
     agregar_a_paquete(paquete, query->file, sizeof(query->file));
     enviar_paquete(socket, paquete, logger_master);
+
+    log_info(logger_master, "## Se envía la Query <%d> al Worker <%s>", query->id, query->worker->id);
 }
 
 query_t *buscar_victima()

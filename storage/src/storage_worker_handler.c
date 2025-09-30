@@ -1,22 +1,39 @@
 #include <storage_worker_handler.h>
 
-void *storage_worker_handler(void *arg) {
-    int* aux = (int*){arg};
-    int socket = *aux;
+void *storage_worker_handler(void *arg)
+{
+    int socket = *(int *)arg;
+    free(arg);
 
-    paquete_t *paquete_handsake = recibir_paquete(socket, logger_storage);
-    if (paquete_handsake->codigo_operacion != HANDSHAKE_WORKER_STORAGE) {
-        log_error(logger_storage, "Se recivio un handshake de un modulo distinto a Worker");
-        enviar_resultado_handshake(socket, ERROR, logger_storage);
-        close(socket);
-        exit(EXIT_FAILURE);
+    while (1)
+    {
+        t_list *list = recv_package(socket, logger_storage);
+        op_code opcode = get_opcode(list);
+        char *id_worker;
+
+        switch (opcode)
+        {
+        case HANDSHAKE_WORKER_STORAGE:
+        {
+            id_worker = string_duplicate(list_get(list, 0));
+            CANT_WORKERS++;
+            send(socket, &BLOCK_SIZE, sizeof(int), 0);
+
+            log_info(logger_storage, "##Se conecta el Worker <%s> - Cantidad de Workers: <%d>", id_worker, CANT_WORKERS);
+            break;
+        }
+        case DESCONEXION:
+        {
+            CANT_WORKERS--;
+            log_info(logger_storage, "##Se desconecta el Worker <%s> - Cantidad de Workers: <%d>", id_worker, CANT_WORKERS);
+            close(socket);
+            return NULL;
+            break;
+        }
+        default:
+            return NULL;
+        }
     }
-    
-    buffer_t *buffer = obtener_siguiente_item(paquete_handsake);
-    char* identificador = (char*){buffer->stream};
-
-    log_info(logger_storage, "##Se conecta el Worker %s - Cantidad de Workers: /TODO/", identificador);
-    enviar_resultado_handshake(socket, OK, logger_storage);
 
     return NULL;
 }

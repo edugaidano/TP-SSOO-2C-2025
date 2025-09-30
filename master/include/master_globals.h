@@ -39,10 +39,11 @@ typedef struct
 {
     int id;
     int pc;
-    int *controler_socket;
+    int controler_socket;
     char *file;
     int prioridad;
     worker_t *worker;
+    bool is_exec;
 } query_t;
 
 #endif

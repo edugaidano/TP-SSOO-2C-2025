@@ -10,6 +10,7 @@ int main(int argc, char *argv[])
 
     // Iniciar Logs y Configs
     init(argv[1]);
+    char ack[4];
 
     /*
         int master_socket = connect_to_server(IP_MASTER, PUERTO_MASTER, logger_worker);
@@ -23,11 +24,23 @@ int main(int argc, char *argv[])
         log_info(logger_worker, "## handshake con master realizado");
     */
 
-    // Conexiones con Master
+    // Handshake con Storage
+    int storage_socket = connect_to_server(IP_STORAGE, PUERTO_STORAGE, logger_worker);
+    paquete_t *handshake_storage = crear_paquete(HANDSHAKE_WORKER_STORAGE);
+    agregar_a_paquete(handshake_storage, argv[2], strlen(argv[2]) + 1);
+    enviar_paquete(storage_socket, handshake_storage, logger_worker);
+    log_info(logger_worker, "se envia handshake a storage, id enviado: %s", argv[2]);
+    recv(storage_socket, &tam_pagina, sizeof(int), MSG_WAITALL);
+    log_info(logger_worker, "se confirma la conexion con storage, tamaño de pagina: %d", tam_pagina);
 
+    // Handshake con Master
     int master_socket = connect_to_server(IP_MASTER, PUERTO_MASTER, logger_worker);
-    enviar_handshake(HANDSHAKE_WORKER_MASTER, master_socket, "Master", argv[2]);
-    verificar_resultado_handshake(master_socket, "Master");
+    paquete_t *handshake_master = crear_paquete(HANDSHAKE_WORKER_MASTER);
+    agregar_a_paquete(handshake_master, argv[2], strlen(argv[2]) + 1);
+    enviar_paquete(master_socket, handshake_master, logger_worker);
+    log_info(logger_worker, "se envia handshake a master, id enviado: %s", argv[2]);
+    recv(master_socket, ack, 4, MSG_WAITALL);
+    log_info(logger_worker, "se confirma la conexion con master");
 
     // Iniciar memoria interna
     init_memoria();

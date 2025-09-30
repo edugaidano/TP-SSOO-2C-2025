@@ -48,8 +48,9 @@ void *esperar_respuesta(void *arg)
     {
     case QUERY_FINALIZADA:
     {
-        finalizar_query(query);
+        finalizar_query(query, FINALIZACION_CORRECTA);
         liberar_worker(query->worker);
+        list_destroy_and_destroy_elements(list, free);
         break;
     }
     case NOTIF_READ:
@@ -76,12 +77,21 @@ void *esperar_respuesta(void *arg)
 
         log_info(logger_master, "## Se desaloja la Query <%d> (<%d>) y comienza a ejecutar la Query <%d> (<%d>) en el Worker <%s>", query_desalojada->id, query_desalojada->prioridad, query->id, query->prioridad, worker->id);
         solicitar_ejecucion_query(query, query->worker->fd);
+        list_destroy_and_destroy_elements(list, free);
+        break;
+    }
+    case DESCONEXION:
+    {
+        finalizar_query(query, ERR_DESC_WORKER);
+
+        destruir_worker(query->worker);
+        destruir_query(query);
+        list_destroy_and_destroy_elements(list, free);
         break;
     }
     default:;
     }
 
-    list_destroy_and_destroy_elements(list, free);
     return 0;
 }
 

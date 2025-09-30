@@ -22,8 +22,7 @@ void enviar_paquete(int socket, paquete_t *paquete, t_log *logger)
 
     if (send(socket, paquete_serializado, espacio_paquete_serializado(paquete), 0) == -1)
     {
-        log_error(logger, "No se pudo enviar el paquete");
-        abort();
+        log_warning(logger, "No se pudo enviar el paquete");
     }
 
     destruir_paquete(paquete);
@@ -79,10 +78,12 @@ void *serializar_paquete(paquete_t *paquete)
 paquete_t *recibir_paquete(int socket_cliente, t_log *logger)
 {
     op_code codigo_operacion;
-    if (recv(socket_cliente, &codigo_operacion, sizeof(op_code), MSG_WAITALL) <= 0)
+    int res = recv(socket_cliente, &codigo_operacion, sizeof(op_code), MSG_WAITALL);
+
+    if (res <= 0)
     {
-        log_error(logger, "Error en recv (fd %d)", socket_cliente);
-        exit(EXIT_FAILURE);
+        log_warning(logger, "se desconectó un modulo");
+        return NULL;
     }
     paquete_t *paquete = crear_paquete(codigo_operacion);
 
@@ -144,7 +145,7 @@ buffer_t *obtener_siguiente_item(paquete_t *paquete)
 
     return item;
 }
-op_code get_opcode(t_list *list)
+int get_opcode(t_list *list)
 {
     int *ptr = list_remove(list, 0);
     op_code code = *ptr;
@@ -158,6 +159,14 @@ t_list *recv_package(int socket, t_log *logger)
         t_list *lista = list_create();
 
         paquete_t *paquete = recibir_paquete(socket, logger);
+
+        if (paquete == NULL)
+        {
+            int *opcode = malloc(sizeof(int));
+            *opcode = -1;
+            list_add(lista, opcode);
+            return lista;
+        }
 
         int *codigo = malloc(sizeof(int));
         *codigo = paquete->codigo_operacion;

@@ -4,10 +4,8 @@
 #include <utils/networking.h>
 #include <worker_globals.h>
 #include <worker_init.h>
-#include <handsake.h>
 #include <parser.h>
 #include <interpreter.h>
 #include <commons/collections/list.h>
-
 
 #endif
