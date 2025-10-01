@@ -25,12 +25,6 @@ void *process_handler(void *arg)
 
         hacer_par_query_worker(query, worker);
         solicitar_ejecucion_query(query, worker->fd);
-
-        query_t **query_ptr = malloc(sizeof(query_ptr));
-        *query_ptr = query;
-        pthread_t response_thread;
-        pthread_create(&response_thread, NULL, &esperar_respuesta, query_ptr);
-        pthread_detach(response_thread);
     }
     return 0;
 }

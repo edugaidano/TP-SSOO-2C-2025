@@ -20,17 +20,22 @@ extern pthread_mutex_t mutex_ready;
 extern pthread_mutex_t mutex_exec;
 extern pthread_mutex_t mutex_workers;
 extern pthread_cond_t all_workers_busy;
-
 typedef struct worker worker_t;
 typedef struct query query_t;
 
+typedef enum
+{
+    READY,
+    EXEC,
+    FINISHED
+} state_t;
+
 struct worker
 {
-    int fd;
+    int socket;
     char *id;
     pthread_mutex_t mutex;
-    bool is_free;
-    bool is_connected;
+    state_t state;
     query_t *query;
 };
 
@@ -38,13 +43,12 @@ struct query
 {
     int id;
     int pc;
-    int controler_socket;
+    int socket;
     char *file;
     int prioridad;
     worker_t *worker;
     pthread_mutex_t mutex;
-    bool is_exec;
-    bool is_conected;
+    state_t state;
 };
 
 #endif

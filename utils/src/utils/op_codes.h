@@ -3,6 +3,7 @@
 
 typedef enum
 {
+    DESCONEXION = -1,
     HANDSHAKE_QUERY_MASTER,
     HANDSHAKE_WORKER_MASTER,
     HANDSHAKE_WORKER_STORAGE,
@@ -18,8 +19,7 @@ typedef enum
     QUERY_FINALIZADA,
     NOTIF_QUERY_CONTROL,
     DESALOJO_QUERY,
-    QUERY_DESALOJADA,
-    DESCONEXION = -1
+    QUERY_DESALOJADA
 } op_code;
 
 typedef enum

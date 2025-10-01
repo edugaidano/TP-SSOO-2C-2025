@@ -13,12 +13,11 @@ int main(int argc, char *argv[])
 
     int server_socket = create_server(PUERTO_ESCUCHA, logger_master);
 
-    pthread_t connections_thread;
-    // pthread_create(&main_thread, NULL, &process_handler, NULL);
+    pthread_t connections_thread, main_thread;
+    pthread_create(&main_thread, NULL, &process_handler, NULL);
     pthread_create(&connections_thread, NULL, &master_network_handler, &server_socket);
-    // pthread_create(&keepalive_thread, NULL, &master_keepalive, NULL);
     pthread_detach(connections_thread);
-    // pthread_detach(main_thread);
+    pthread_detach(main_thread);
 
     while (1)
     {

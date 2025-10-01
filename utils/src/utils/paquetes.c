@@ -79,13 +79,14 @@ paquete_t *recibir_paquete(int socket_cliente, t_log *logger)
 {
     op_code codigo_operacion;
     int res = recv(socket_cliente, &codigo_operacion, sizeof(op_code), MSG_WAITALL);
+    paquete_t *paquete;
 
     if (res <= 0)
     {
-        log_warning(logger, "se desconectó un modulo");
-        return NULL;
+        paquete = crear_paquete(DESCONEXION);
+        return paquete;
     }
-    paquete_t *paquete = crear_paquete(codigo_operacion);
+    paquete = crear_paquete(codigo_operacion);
 
     int size_total;
     int size = 1;
@@ -160,17 +161,14 @@ t_list *recv_package(int socket, t_log *logger)
 
         paquete_t *paquete = recibir_paquete(socket, logger);
 
-        if (paquete == NULL)
-        {
-            int *opcode = malloc(sizeof(int));
-            *opcode = -1;
-            list_add(lista, opcode);
-            return lista;
-        }
-
         int *codigo = malloc(sizeof(int));
         *codigo = paquete->codigo_operacion;
         list_add(lista, codigo);
+
+        if (paquete->codigo_operacion == DESCONEXION)
+        {
+            return lista;
+        }
 
         buffer_t *item = obtener_siguiente_item(paquete);
         while (item != NULL)

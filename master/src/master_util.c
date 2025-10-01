@@ -10,10 +10,8 @@ void finalizar_query(query_t *query, razon_fin razon)
 {
     pthread_mutex_lock(&mutex_exec);
     list_remove_element(querys_exec, query);
-    query->is_exec = false;
+    query->state = FINISHED;
     pthread_mutex_unlock(&mutex_exec);
-
-    // TODO destruir la query;
 
     switch (razon)
     {
@@ -35,7 +33,7 @@ void liberar_query(query_t *query, int pc)
     pthread_mutex_lock(&mutex_exec);
     list_remove_element(querys_exec, query);
     query->worker = NULL;
-    query->is_exec = false;
+    query->state = READY;
     pthread_mutex_unlock(&mutex_exec);
 
     pthread_mutex_lock(&mutex_ready);
@@ -51,7 +49,7 @@ void liberar_query(query_t *query, int pc)
 
 void destruir_query(query_t *query)
 {
-    if (query->is_exec)
+    if (query->worker)
     {
         pthread_mutex_lock(&mutex_exec);
         list_remove_element(querys_exec, query);
@@ -64,7 +62,7 @@ void destruir_query(query_t *query)
         pthread_mutex_unlock(&mutex_ready);
     }
 
-    close(query->controler_socket);
+    close(query->socket);
     free(query->file);
     free(query);
 }
@@ -76,7 +74,7 @@ void notificar_finalizacion(query_t *query, razon_fin razon_enum)
     paquete_t *paquete = crear_paquete(NOTIF_QUERY_CONTROL);
     agregar_a_paquete(paquete, &mensaje, sizeof(int));
     agregar_a_paquete(paquete, &razon, sizeof(int));
-    enviar_paquete(query->controler_socket, paquete, logger_master);
+    enviar_paquete(query->socket, paquete, logger_master);
 }
 
 void notificar_read(query_t *query, char *file, char *tag, char *contenido)
@@ -87,7 +85,7 @@ void notificar_read(query_t *query, char *file, char *tag, char *contenido)
     agregar_a_paquete(paquete, file, string_length(file) + 1);
     agregar_a_paquete(paquete, tag, string_length(tag) + 1);
     agregar_a_paquete(paquete, contenido, string_length(contenido) + 1);
-    enviar_paquete(query->controler_socket, paquete, logger_master);
+    enviar_paquete(query->socket, paquete, logger_master);
 
     log_info(logger_master, "## Se envía un mensaje de lectura de la Query <%d> en el Worker <%s> al Query Control", query->id, query->worker->id);
 }
@@ -95,18 +93,17 @@ void notificar_read(query_t *query, char *file, char *tag, char *contenido)
 void liberar_worker(worker_t *worker)
 {
     pthread_mutex_lock(&mutex_workers);
-    worker->is_free = true;
+    worker->state = READY;
     worker->query = NULL;
     pthread_mutex_unlock(&mutex_workers);
 }
-
 void destruir_worker(worker_t *worker)
 {
     pthread_mutex_lock(&mutex_workers);
     list_remove_element(workers, worker);
     pthread_mutex_unlock(&mutex_workers);
 
-    close(worker->fd);
+    close(worker->socket);
     free(worker->id);
     free(worker);
 }
@@ -147,7 +144,7 @@ worker_t *buscar_worker_libre()
     while (list_iterator_has_next(iterator))
     {
         worker_t *worker = list_iterator_next(iterator);
-        if (worker->is_free)
+        if (worker->state == READY)
         {
             pthread_mutex_unlock(&mutex_workers);
             list_iterator_destroy(iterator);
@@ -165,9 +162,9 @@ void hacer_par_query_worker(query_t *query, worker_t *worker)
     pthread_mutex_lock(&mutex_workers);
     list_add(querys_exec, query);
     query->worker = worker;
+    query->state = EXEC;
     worker->query = query;
-    query->is_exec = true;
-    worker->is_free = false;
+    worker->state = EXEC;
     pthread_mutex_unlock(&mutex_exec);
     pthread_mutex_unlock(&mutex_workers);
 
@@ -182,7 +179,7 @@ void solicitar_ejecucion_query(query_t *query, int socket)
     paquete_t *paquete = crear_paquete(SOLICITUD_EJECUCION);
     agregar_a_paquete(paquete, &query->id, sizeof(int));
     agregar_a_paquete(paquete, &query->pc, sizeof(int));
-    agregar_a_paquete(paquete, query->file, sizeof(query->file));
+    agregar_a_paquete(paquete, query->file, strlen(query->file) + 1);
     enviar_paquete(socket, paquete, logger_master);
 
     log_info(logger_master, "## Se envía la Query <%d> al Worker <%s>", query->id, query->worker->id);
@@ -207,5 +204,5 @@ query_t *buscar_victima()
 void solicitar_desalojo(query_t *victima)
 {
     paquete_t *paquete = crear_paquete(DESALOJO_QUERY);
-    enviar_paquete(victima->worker->fd, paquete, logger_master);
+    enviar_paquete(victima->worker->socket, paquete, logger_master);
 }
