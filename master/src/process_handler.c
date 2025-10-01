@@ -82,10 +82,9 @@ void *esperar_respuesta(void *arg)
     }
     case DESCONEXION:
     {
-        finalizar_query(query, ERR_DESC_WORKER);
-
-        destruir_worker(query->worker);
-        destruir_query(query);
+        pthread_mutex_lock(&query->worker->mutex);
+        query->worker->is_connected = false;
+        pthread_mutex_unlock(&query->worker->mutex);
         list_destroy_and_destroy_elements(list, free);
         break;
     }

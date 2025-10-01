@@ -33,9 +33,6 @@ void *master_network_handler(void *arg)
 
             log_info(logger_master, "## Se conecta un Query Control para ejecutar la Query <%s> con prioridad <%d>", archivo, prioridad);
             log_info(logger_master, "## Id asignado: <%d>. Nivel multiprocesamiento <%d>", query->id, list_size(workers));
-
-            pthread_t query_keepalive;
-            pthread_create(&query_keepalive, NULL, &keepalive, query);
             break;
         }
         case HANDSHAKE_WORKER_MASTER:
@@ -46,6 +43,7 @@ void *master_network_handler(void *arg)
             worker->is_free = true;
             worker->id = id;
             worker->fd = connection_socket;
+            worker->query = NULL;
 
             list_add(workers, worker);
             send(connection_socket, "ACK", 4, 0);
@@ -59,26 +57,4 @@ void *master_network_handler(void *arg)
         }
         list_destroy_and_destroy_elements(list, free);
     }
-}
-
-void *keepalive(void *arg)
-{
-    query_t *query = arg;
-    int buffer[1];
-    while (1)
-    {
-        int res = recv(query->controler_socket, buffer, sizeof(int), MSG_PEEK);
-        if (res == 0)
-        {
-            log_info(logger_master, "## Se desconecta un Query Control. Se finaliza la Query <%d> con prioridad <%d>. Nivel multiprocesamiento <%d>", query->id, query->prioridad, list_size(workers));
-            if (query->is_exec)
-            {
-                log_info(logger_master, "## Se desaloja la Query <%d> del Worker <%s>", query->id, query->worker->id);
-                liberar_worker(query->worker);
-            }
-            destruir_query(query);
-            break;
-        }
-    }
-    return 0;
 }

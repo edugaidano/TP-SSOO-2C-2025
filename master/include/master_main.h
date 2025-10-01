@@ -8,5 +8,6 @@
 #include <master_init.h>
 #include <process_handler.h>
 #include <master_network_handler.h>
+#include <master_keepalive.h>
 
 #endif

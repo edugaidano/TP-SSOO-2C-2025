@@ -21,21 +21,20 @@ extern pthread_mutex_t mutex_exec;
 extern pthread_mutex_t mutex_workers;
 extern pthread_cond_t all_workers_busy;
 
-typedef struct
+typedef struct worker worker_t;
+typedef struct query query_t;
+
+struct worker
 {
     int fd;
     char *id;
+    pthread_mutex_t mutex;
     bool is_free;
-} worker_t;
+    bool is_connected;
+    query_t *query;
+};
 
-typedef struct
-{
-    int fd;
-    char *id;
-    bool is_free;
-} worker;
-
-typedef struct
+struct query
 {
     int id;
     int pc;
@@ -43,7 +42,9 @@ typedef struct
     char *file;
     int prioridad;
     worker_t *worker;
+    pthread_mutex_t mutex;
     bool is_exec;
-} query_t;
+    bool is_conected;
+};
 
 #endif

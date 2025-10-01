@@ -96,6 +96,7 @@ void liberar_worker(worker_t *worker)
 {
     pthread_mutex_lock(&mutex_workers);
     worker->is_free = true;
+    worker->query = NULL;
     pthread_mutex_unlock(&mutex_workers);
 }
 
@@ -164,6 +165,7 @@ void hacer_par_query_worker(query_t *query, worker_t *worker)
     pthread_mutex_lock(&mutex_workers);
     list_add(querys_exec, query);
     query->worker = worker;
+    worker->query = query;
     query->is_exec = true;
     worker->is_free = false;
     pthread_mutex_unlock(&mutex_exec);
