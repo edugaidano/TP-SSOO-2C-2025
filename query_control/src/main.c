@@ -24,6 +24,7 @@ void recibir_mensaje(int socket)
             default:
                 break;
             }
+            close(socket);
             break;
         case NOTIF_READ:
             char *file = (char *)list_get(list, 1);

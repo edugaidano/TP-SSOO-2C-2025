@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
 
     // Iniciar memoria interna
     init_memoria();
-    t_list *instrucciones;
+    // t_list *instrucciones;
 
     // while (true)
     // {
