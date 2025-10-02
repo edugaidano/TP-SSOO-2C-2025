@@ -24,7 +24,7 @@ void *process_handler(void *arg)
         worker_t *worker = buscar_worker_libre();
 
         hacer_par_query_worker(query, worker);
-        solicitar_ejecucion_query(query, worker->fd);
+        solicitar_ejecucion_query(query, worker->socket);
     }
     return 0;
 }
@@ -33,7 +33,7 @@ void *esperar_respuesta(void *arg)
 {
     query_t *query = *(query_t **)arg;
     free(arg);
-    int socket = query->worker->fd;
+    int socket = query->worker->socket;
 
     t_list *list = recv_package(socket, logger_master);
     op_code opcode = get_opcode(list);
@@ -70,15 +70,7 @@ void *esperar_respuesta(void *arg)
         hacer_par_query_worker(query, worker);
 
         log_info(logger_master, "## Se desaloja la Query <%d> (<%d>) y comienza a ejecutar la Query <%d> (<%d>) en el Worker <%s>", query_desalojada->id, query_desalojada->prioridad, query->id, query->prioridad, worker->id);
-        solicitar_ejecucion_query(query, query->worker->fd);
-        list_destroy_and_destroy_elements(list, free);
-        break;
-    }
-    case DESCONEXION:
-    {
-        pthread_mutex_lock(&query->worker->mutex);
-        query->worker->is_connected = false;
-        pthread_mutex_unlock(&query->worker->mutex);
+        solicitar_ejecucion_query(query, query->worker->socket);
         list_destroy_and_destroy_elements(list, free);
         break;
     }

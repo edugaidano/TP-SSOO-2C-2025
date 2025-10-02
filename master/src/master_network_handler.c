@@ -96,6 +96,7 @@ void *query_handler(void *arg)
     default:
         break;
     }
+    list_destroy_and_destroy_elements(list, free);
 
     return NULL;
 }
@@ -123,5 +124,6 @@ void *worker_handler(void *arg)
     default:
         break;
     }
+    list_destroy_and_destroy_elements(list, free);
     return NULL;
 }
