@@ -177,9 +177,9 @@ void hacer_par_query_worker(query_t *query, worker_t *worker)
 void solicitar_ejecucion_query(query_t *query, int socket)
 {
     paquete_t *paquete = crear_paquete(SOLICITUD_EJECUCION);
+    agregar_a_paquete(paquete, query->file, strlen(query->file) + 1);
     agregar_a_paquete(paquete, &query->id, sizeof(int));
     agregar_a_paquete(paquete, &query->pc, sizeof(int));
-    agregar_a_paquete(paquete, query->file, strlen(query->file) + 1);
     enviar_paquete(socket, paquete, logger_master);
 
     log_info(logger_master, "## Se envía la Query <%d> al Worker <%s>", query->id, query->worker->id);
