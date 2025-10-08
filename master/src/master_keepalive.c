@@ -1,4 +1,4 @@
-#include <master_keepalive.h>
+/*#include <master_keepalive.h>
 
 void *master_keepalive(void *arg)
 {
@@ -44,3 +44,4 @@ void *worker_monitor(void *arg)
     }
     return NULL;
 }
+*/
