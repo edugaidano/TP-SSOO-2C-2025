@@ -13,6 +13,8 @@ paquete_t *crear_paquete(op_code codigo_operacion)
     paquete_t *paquete = malloc(sizeof(paquete_t));
     paquete->codigo_operacion = codigo_operacion;
     paquete->buffer = calloc(1, sizeof(buffer_t));
+    paquete->buffer->size = 0;
+    paquete->buffer->stream = NULL;
     return paquete;
 }
 
@@ -62,7 +64,7 @@ void *serializar_paquete(paquete_t *paquete)
     void *stream = malloc(espacio_paquete_serializado(paquete));
 
     memcpy(stream, &(paquete->codigo_operacion), sizeof(op_code));
-    int desplazamiento = sizeof(int);
+    int desplazamiento = sizeof(op_code);
     memcpy(stream + desplazamiento, &(paquete->buffer->size), sizeof(int));
     desplazamiento += sizeof(int);
     memcpy(stream + desplazamiento, paquete->buffer->stream, paquete->buffer->size);
@@ -156,31 +158,29 @@ int get_opcode(t_list *list)
 
 t_list *recv_package(int socket, t_log *logger)
 {
+    t_list *lista = list_create();
+
+    paquete_t *paquete = recibir_paquete(socket, logger);
+
+    int *codigo = malloc(sizeof(int));
+    *codigo = paquete->codigo_operacion;
+    list_add(lista, codigo);
+
+    if (paquete->codigo_operacion == DESCONEXION)
     {
-        t_list *lista = list_create();
-
-        paquete_t *paquete = recibir_paquete(socket, logger);
-
-        int *codigo = malloc(sizeof(int));
-        *codigo = paquete->codigo_operacion;
-        list_add(lista, codigo);
-
-        if (paquete->codigo_operacion == DESCONEXION)
-        {
-            return lista;
-        }
-
-        buffer_t *item = obtener_siguiente_item(paquete);
-        while (item != NULL)
-        {
-            char *dato = malloc(item->size);
-            memcpy(dato, item->stream, item->size);
-            list_add(lista, dato);
-
-            item = obtener_siguiente_item(paquete);
-        }
-
-        destruir_paquete(paquete);
         return lista;
     }
+
+    buffer_t *item = obtener_siguiente_item(paquete);
+    while (item != NULL)
+    {
+        char *dato = malloc(item->size);
+        memcpy(dato, item->stream, item->size);
+        list_add(lista, dato);
+
+        item = obtener_siguiente_item(paquete);
+    }
+
+    destruir_paquete(paquete);
+    return lista;
 }

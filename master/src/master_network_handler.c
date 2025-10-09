@@ -58,6 +58,7 @@ void *master_network_handler(void *arg)
 
             pthread_t worker_handler_thread;
             pthread_create(&worker_handler_thread, NULL, &worker_handler, worker);
+            pthread_detach(worker_handler_thread);
             break;
         }
         default:;
@@ -105,25 +106,63 @@ void *worker_handler(void *arg)
 {
     worker_t *worker = arg;
     query_t *query = worker->query;
-    t_list *list = recv_package(worker->socket, logger_master);
-    int opcode = get_opcode(list);
-
-    switch (opcode)
+    while (true)
     {
-    case DESCONEXION:
-        if (worker->state == EXEC)
+        t_list *package = recv_package(worker->socket, logger_master);
+        op_code opcode = get_opcode(package);
+
+        switch (opcode)
         {
-            finalizar_query(query, ERR_DESC_WORKER);
-            destruir_worker(worker);
-        }
-        else
+        case CONSULTA_INTERRUPCION: 
         {
-            log_info(logger_master, "## Se desconecta el Worker <%s> - No habia una query en ejecucion - Cantidad total de Workers: <%d> ", worker->id, list_size(workers) - 1);
-            destruir_worker(worker);
+            //TODO: logica para definir interrupcion;
+            bool interrupcion = false;
+            if (send(worker->socket, &interrupcion, sizeof(bool), 0) <= 0) 
+            {
+                log_error(logger_master, "Error al enviar interrupción al Worker <%s>", worker->id);
+                return NULL;
+            }
+            break;
         }
-    default:
-        break;
+        case LECTURA_MASTER: 
+        {
+            //TODO: logica para la lectura;
+            resultado_t result = OK;
+            if (send(worker->socket, &result, sizeof(bool), 0) <= 0) 
+            {
+                log_error(logger_master, "Error al enviar el resultado de la lectura al Worker <%s>", worker->id);
+                return NULL;
+            }
+            break;
+        }
+        case INSTRUCCION_MASTER: 
+        {
+            //TODO: logica para el exit;
+            resultado_t result = OK;
+            if (send(worker->socket, &result, sizeof(resultado_t), 0) <= 0) 
+            {
+                log_error(logger_master, "Error al enviar el resultado del exit al Worker <%s>", worker->id);
+                return NULL;
+            }
+            break;
+        }
+        case DESCONEXION:
+            if (worker->state == EXEC)
+            {
+                finalizar_query(query, ERR_DESC_WORKER);
+                destruir_worker(worker);
+            }
+            else
+            {
+                log_info(logger_master, "## Se desconecta el Worker <%s> - No habia una query en ejecucion - Cantidad total de Workers: <%d> ", worker->id, list_size(workers) - 1);
+                destruir_worker(worker);
+            }
+            break;
+        default:
+            break;
+        }
+
+        list_destroy_and_destroy_elements(package, free);
     }
-    list_destroy_and_destroy_elements(list, free);
     return NULL;
 }

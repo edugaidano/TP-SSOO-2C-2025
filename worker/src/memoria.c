@@ -145,11 +145,23 @@ void leer_pagina(nodo_pagina* pagina, int direccion, int size, int fd_storage, i
         puntero_memoria = pagina_extra->puntero; // Como es una pagina nueva, se escrvira desde la base de la misma
         memcpy(lectura + (size - size_restante), puntero_memoria, size_restante);
     }
+    
     paquete_t* paquete = crear_paquete(LECTURA_MASTER);
     agregar_a_paquete(paquete, lectura, size);
     void* paquete_s = serializar_paquete(paquete);
-    if (send(fd_storage, paquete_s, espacio_paquete_serializado(paquete), 0) <= 0) {
-        log_error(logger_worker, "Error o desconeccion en Master  al enviar la lectura");
+    if (send(fd_master, paquete_s, espacio_paquete_serializado(paquete), 0) <= 0) {
+        log_error(logger_worker, "Error o desconeccion en Master al enviar la lectura");
+        exit(EXIT_FAILURE);
+    }
+    
+    resultado_t result;
+    if (recv(fd_master, &result, espacio_paquete_serializado(paquete), 0) <= 0) {
+        log_error(logger_worker, "Error o desconeccion en Master al recibir un resultado de la lectura");
+        exit(EXIT_FAILURE);
+    }
+    
+    if (result == ERROR) {
+        log_error(logger_worker, "Error al realizar la lectura en el master");
         exit(EXIT_FAILURE);
     }
 

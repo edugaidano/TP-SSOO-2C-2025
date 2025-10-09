@@ -48,6 +48,7 @@ int main(int argc, char *argv[])
 
     while (true) {
         // Espera de Query (Paqute: nombre del archivo, query ID, PC)
+        log_info(logger_worker, "Esperando una query ...");
         paquete_t *paquete_query = recibir_paquete(master_socket, logger_worker);
         if (paquete_query->codigo_operacion != SOLICITUD_EJECUCION) {
             log_error(logger_worker, "Se recibio un paquete con un op_code distinto a %d", SOLICITUD_EJECUCION);
@@ -110,11 +111,16 @@ int main(int argc, char *argv[])
                 break;
             }
 
-            // Idea para manejar interrupciones desde el worker
-            send(master_socket, &(op_code){CONSULTA_INTERRUPCION}, sizeof(int), 0); // Podria ser un paquete
-            bool resultado;
-            recv(master_socket, &resultado, sizeof(bool), MSG_WAITALL); // True: es necesario interrumpir la ejecucion, False: se continua con normalidad
+            // Manejo de interrupciones
+            paquete_t* paquete_interrupcion = crear_paquete(CONSULTA_INTERRUPCION);
+            agregar_a_paquete(paquete_interrupcion, "A", string_length("A") + 1); //TODO: revisar por que no funciona sin esto
+            enviar_paquete(master_socket, paquete_interrupcion, logger_worker);
+            bool resultado; 
+            // True: es necesario interrumpir la ejecucion 
+            // False: se continua con normalidad
+            recv(master_socket, &resultado, sizeof(bool), MSG_WAITALL);
             if (resultado)  {
+                log_info(logger_worker, "Se recibio una interrupcion de la query por parte del Master");
                 break; // sale del while y espera un nuevo query (Aqui se puede agregar un paquete si es necesario para el master)
             }
 

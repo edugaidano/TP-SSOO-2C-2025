@@ -218,11 +218,11 @@ void interpretar_END(t_instrucion* instruccion, char* query_id, int fd_master) {
     paquete_t* paquete = crear_paquete(INSTRUCCION_MASTER);
     agregar_a_paquete(paquete, &(instruccion->copi), sizeof(set_instrucciones)); 
     void* paquete_s = serializar_paquete(paquete);
-
+    
     enviar_paquete_a(paquete_s, espacio_paquete_serializado(paquete), fd_master, "Master", instruccion->identificador);
     destruir_paquete(paquete);
     free(paquete_s);
-
+    
     resultado_t resultado = resultado_instruccion(fd_master, "Master", instruccion->identificador);
     log_ejecucion(resultado, instruccion->identificador, query_id);
 }
