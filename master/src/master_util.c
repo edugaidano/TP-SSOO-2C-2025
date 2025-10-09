@@ -95,6 +95,7 @@ void liberar_worker(worker_t *worker)
     pthread_mutex_lock(&mutex_workers);
     worker->state = READY;
     worker->query = NULL;
+    worker->interrumpir = false;
     pthread_mutex_unlock(&mutex_workers);
 }
 void destruir_worker(worker_t *worker)
@@ -102,6 +103,7 @@ void destruir_worker(worker_t *worker)
     pthread_mutex_lock(&mutex_workers);
     list_remove_element(workers, worker);
     pthread_mutex_unlock(&mutex_workers);
+    sem_close(&(worker->sem_interrupt));
 
     close(worker->socket);
     free(worker->id);

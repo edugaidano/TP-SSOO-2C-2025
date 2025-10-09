@@ -25,7 +25,10 @@ void *storage_worker_handler(void *arg)
         case INSTRUCCION_STORAGE:
             //TODO: desglosar paquete y realizar instrucciones (revisar workerr/src/interpreter.c)
             resultado_t result = OK;
-            send(socket, &result, sizeof(resultado_t), 0); //TODO: if(send <= 0)
+            if (send(socket, &result, sizeof(resultado_t), 0) <= 0) {
+                log_error(logger_storage, "Error o desconeccion al enviar el resultado de la instruccion");
+                exit(EXIT_FAILURE);
+            }
             break;
         case SOLICITUD_STORAGE: 
         {

@@ -120,14 +120,15 @@ void *worker_handler(void *arg)
         case CONSULTA_INTERRUPCION: 
         {
             bool interrumpir = worker->interrumpir;
-            if (interrumpir) {
-                sem_post(&(worker->sem_interrupt));
-            }
             
             if (send(worker->socket, &interrumpir, sizeof(bool), 0) <= 0) 
             {
                 log_error(logger_master, "Error al enviar interrupción al Worker <%s>", worker->id);
                 return NULL;
+            }
+            
+            if (interrumpir) {
+                sem_post(&(worker->sem_interrupt));
             }
             break;
         }
