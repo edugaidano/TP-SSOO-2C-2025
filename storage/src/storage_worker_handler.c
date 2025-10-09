@@ -32,7 +32,7 @@ void *storage_worker_handler(void *arg)
             //TODO: buscar pagina exacta (revisar workerr/src/memoria.c > solicitar_pagina())
             paquete_t* page_package = crear_paquete(PAGINA_WORKER);
             agregar_a_paquete(page_package, "A", BLOCK_SIZE); //Contenido del bloque/pagina
-            agregar_a_paquete(page_package, &(double){5.0}, sizeof(double)); //Numero de pagina
+            agregar_a_paquete(page_package, &(double){0.0}, sizeof(double)); //Numero de pagina
             enviar_paquete(socket, page_package, logger_storage);
             break;
         }

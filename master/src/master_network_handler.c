@@ -48,6 +48,8 @@ void *master_network_handler(void *arg)
             worker->socket = connection_socket;
             worker->state = READY;
             worker->query = NULL;
+            worker->interrumpir = false;
+            sem_init(&(worker->sem_interrupt), 0, 0);
 
             list_add(workers, worker);
             send(connection_socket, "ACK", 4, 0);
@@ -87,6 +89,8 @@ void *query_handler(void *arg)
         break;
     case EXEC:
         log_info(logger_master, "la query: <%d> estaba en exec, desalojando cpu: %s", query->id, query->worker->id);
+        query->worker->interrumpir = true;
+        sem_wait(&(query->worker->sem_interrupt));
         liberar_worker(query->worker);
         log_info(logger_master, "la query fue eliminada, querys en exec: %d", list_size(querys_exec) - 1);
         destruir_query(query);
@@ -115,9 +119,12 @@ void *worker_handler(void *arg)
         {
         case CONSULTA_INTERRUPCION: 
         {
-            //TODO: logica para definir interrupcion;
-            bool interrupcion = false;
-            if (send(worker->socket, &interrupcion, sizeof(bool), 0) <= 0) 
+            bool interrumpir = worker->interrumpir;
+            if (interrumpir) {
+                sem_post(&(worker->sem_interrupt));
+            }
+            
+            if (send(worker->socket, &interrumpir, sizeof(bool), 0) <= 0) 
             {
                 log_error(logger_master, "Error al enviar interrupción al Worker <%s>", worker->id);
                 return NULL;
@@ -125,8 +132,11 @@ void *worker_handler(void *arg)
             break;
         }
         case LECTURA_MASTER: 
-        {
-            //TODO: logica para la lectura;
+        {   
+            char* aux = list_get(package, 0);
+            char* content = list_get(package, 1);
+            char** file_tag = string_split(aux, ":");
+            notificar_read(worker->query, file_tag[0], file_tag[1], content);
             resultado_t result = OK;
             if (send(worker->socket, &result, sizeof(bool), 0) <= 0) 
             {
@@ -135,15 +145,17 @@ void *worker_handler(void *arg)
             }
             break;
         }
-        case INSTRUCCION_MASTER: 
+        case INSTRUCCION_MASTER: // La unica es el EXIT, se podria hacer una verificacion con el contenido
         {
-            //TODO: logica para el exit;
+            notificar_finalizacion(worker->query, FINALIZACION_CORRECTA);
+            worker->query->state = FINISHED;
             resultado_t result = OK;
             if (send(worker->socket, &result, sizeof(resultado_t), 0) <= 0) 
             {
                 log_error(logger_master, "Error al enviar el resultado del exit al Worker <%s>", worker->id);
                 return NULL;
             }
+            liberar_worker(worker);
             break;
         }
         case DESCONEXION:

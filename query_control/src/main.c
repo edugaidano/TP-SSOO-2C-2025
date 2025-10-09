@@ -26,9 +26,9 @@ void recibir_mensaje(int socket)
             }
             break;
         case NOTIF_READ:
-            char *file = (char *)list_get(list, 1);
-            char *tag = (char *)list_get(list, 2);
-            char *contenido = (char *)list_get(list, 3);
+            char *file = (char *)list_get(list, 0);
+            char *tag = (char *)list_get(list, 1);
+            char *contenido = (char *)list_get(list, 2);
             log_info(logger_query_control, "## Lectura realizada: Archivo <%s:%s>, contenido: <%s>", file, tag, contenido);
             recibir_mensaje(socket);
             break;

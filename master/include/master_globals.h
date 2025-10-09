@@ -34,6 +34,8 @@ struct worker
 {
     int socket;
     char *id;
+    bool interrumpir;
+    sem_t sem_interrupt;
     pthread_mutex_t mutex;
     state_t state;
     query_t *query;

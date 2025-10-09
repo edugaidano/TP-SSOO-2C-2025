@@ -101,7 +101,7 @@ void interpretar_FLUSH(t_instrucion* instruccion, char* query_id, int fd_storage
         if (pagina->modificado && string_equals_ignore_case(pagina->identificador, instruccion->datos[0])) {
             agregar_a_paquete(paquete, &(pagina->nro_pagina), sizeof(int));
             agregar_a_paquete(paquete, pagina->puntero, tam_pagina);
-            reset_pagina(pagina, i, query_id);
+            //reset_pagina(pagina, i, query_id);
         }
     }
     void* paquete_s = serializar_paquete(paquete);
@@ -184,7 +184,7 @@ void interpretar_WRITE(t_instrucion* instruccion, char* query_id, int fd_storage
     if (pagina == NULL) {
         pagina = solicitar_pagina(instruccion->datos[0], nro_pagina, fd_storage, query_id);
     }
-    
+
     escribir_pagina(pagina, atoi(instruccion->datos[1]), instruccion->datos[2], fd_storage,query_id);
     log_ejecucion(OK, instruccion->identificador, query_id);
 }

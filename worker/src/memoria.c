@@ -88,11 +88,12 @@ nodo_pagina* solicitar_pagina(char* identificador, int nro_pagina, int fd_storag
     nodo_pagina* pagina = list_get(tabla_paginas, indice);
     pagina->identificador = string_duplicate(identificador);
     memcpy(pagina->puntero, buffer->stream, buffer->size);
+    liverar_buffer(buffer);
     buffer = obtener_siguiente_item(paquete);
     memcpy(&(pagina->nro_pagina), buffer->stream, buffer->size);
+    liverar_buffer(buffer);
     
     destruir_paquete(paquete);
-    free(buffer);
 
     log_info(logger_worker, "Query %s: - Memoria Add - File: %s - Tag: %s - Pagina: %d", query_id, datos[0], datos[1], nro_pagina);
     string_array_destroy(datos);
@@ -105,7 +106,7 @@ void escribir_pagina(nodo_pagina* pagina, int direccion, char* datos, int fd_sto
 
     char* puntero;
     pagina->modificado = true;
-    if (size_dato <= tam_pagina - direccion_en_pagina) { // si el dato entra en la pagina actual
+    if (size_dato <= (tam_pagina - direccion_en_pagina)) { // si el dato entra en la pagina actual
         puntero = pagina->puntero + direccion_en_pagina;
         memcpy(puntero, datos, size_dato);
     } else {
@@ -147,6 +148,7 @@ void leer_pagina(nodo_pagina* pagina, int direccion, int size, int fd_storage, i
     }
     
     paquete_t* paquete = crear_paquete(LECTURA_MASTER);
+    agregar_a_paquete(paquete, pagina->identificador, string_length(pagina->identificador) + 1);
     agregar_a_paquete(paquete, lectura, size);
     void* paquete_s = serializar_paquete(paquete);
     if (send(fd_master, paquete_s, espacio_paquete_serializado(paquete), 0) <= 0) {

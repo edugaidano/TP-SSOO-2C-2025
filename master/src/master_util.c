@@ -79,9 +79,9 @@ void notificar_finalizacion(query_t *query, razon_fin razon_enum)
 
 void notificar_read(query_t *query, char *file, char *tag, char *contenido)
 {
-    int mensaje = NOTIF_READ;
+    notif_query_control mensaje = NOTIF_READ;
     paquete_t *paquete = crear_paquete(NOTIF_QUERY_CONTROL);
-    agregar_a_paquete(paquete, &mensaje, sizeof(int));
+    agregar_a_paquete(paquete, &mensaje, sizeof(notif_query_control));
     agregar_a_paquete(paquete, file, string_length(file) + 1);
     agregar_a_paquete(paquete, tag, string_length(tag) + 1);
     agregar_a_paquete(paquete, contenido, string_length(contenido) + 1);
