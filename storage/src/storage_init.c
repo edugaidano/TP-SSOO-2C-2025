@@ -18,5 +18,11 @@ void init(char *config_name)
 
     CANT_WORKERS = 0;
 
+    // Ejecutar FRESH_START si corresponde
+    if (FRESH_START) {
+        char* mount_point = "FS"; 
+        storage_fresh_start(mount_point, FS_SIZE, BLOCK_SIZE);
+    }
+
     // config_destroy(config_storage); (?) TODO: revisar donde ponerlo
 }
