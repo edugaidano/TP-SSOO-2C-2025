@@ -68,7 +68,6 @@ void *storage_worker_handler(void *arg)
             agregar_a_paquete(page_package, &pagina, sizeof(double));
 
             enviar_paquete(socket, page_package, logger_storage);
-            eliminar_paquete(page_package);
 
             log_info(logger_storage,
                      "##Worker <%s> - Operación recibida: SOLICITUD_STORAGE - Contenido fijo enviado",
