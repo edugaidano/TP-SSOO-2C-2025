@@ -22,7 +22,7 @@ extern int tam_pagina;
 extern t_list* marco;
 extern t_list* file_tag_pages;
 extern bool* bit_map_marco;
-extern int cantidad_paginas;
+extern int cantidad_marcos;
 
 typedef struct {
     set_instrucciones copi;

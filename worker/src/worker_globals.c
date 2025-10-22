@@ -12,7 +12,7 @@ int RETARDO_MEMORIA;
 int ALGORITMO_REEMPLAZO;
 void *memoria;
 int tam_pagina;
-int cantidad_paginas;
+int cantidad_marcos;
 t_list* marco;
 t_list* file_tag_pages;
 bool* bit_map_marco;

@@ -3,6 +3,7 @@
 
 #include <worker_globals.h>
 #include <math.h>
+#include <unistd.h>
 
 void init_memoria();
 int marco_libre();

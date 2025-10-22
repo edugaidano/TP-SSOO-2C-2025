@@ -5,16 +5,16 @@ void init_memoria() {
     memoria = malloc(TAM_MEMORIA);
 
     // Lista de marcos
-    cantidad_paginas = TAM_MEMORIA/tam_pagina;
+    cantidad_marcos = TAM_MEMORIA/tam_pagina;
     marco = list_create();
-    for (int i = 0; i < cantidad_paginas; i++) {
+    for (int i = 0; i < cantidad_marcos; i++) {
         p_marco puntero = (char*)memoria + i * tam_pagina;
         list_add(marco, puntero);
     }
     
     // bitmap
-    bit_map_marco = malloc( sizeof(bool) * cantidad_paginas);
-    for (int i = 0; i < cantidad_paginas; i++) {
+    bit_map_marco = malloc( sizeof(bool) * cantidad_marcos);
+    for (int i = 0; i < cantidad_marcos; i++) {
         bit_map_marco[i] = false;
     }
 
@@ -25,7 +25,7 @@ void init_memoria() {
 }
 
 int marco_libre() {
-    for (int i = 0; i < cantidad_paginas; i++) {
+    for (int i = 0; i < cantidad_marcos; i++) {
         if (!bit_map_marco[i]) {
             return i;
         }
@@ -159,21 +159,41 @@ void escribir_pagina(nodo_pagina* pagina, char* identificador, int direccion_bas
     p_marco puntero_marco = list_get(marco, pagina->nro_marco);
     char* puntero = puntero_marco + direccion_en_pagina;
     pagina->modificado = true;
-    if (size_dato <= (tam_pagina - direccion_en_pagina)) { // si el dato entra en la pagina actual
+    pagina->uso = true;
+
+    if (size_dato <= tam_pagina - direccion_en_pagina) { // si el dato entra en la pagina actual
+        sleep(RETARDO_MEMORIA/1000);
         memcpy(puntero, datos, size_dato);
     } else {
         int size_restante = size_dato - direccion_en_pagina;
+        int cantidad_paginas_escribir = ceil(size_restante/tam_pagina);
+        int pagina_siguiente = pagina->nro_pagina + 1;
+        
+        sleep(RETARDO_MEMORIA/1000);
         memcpy(puntero, datos, size_dato - size_restante);
+        for (int i = 0; i < cantidad_paginas_escribir; i++) {  
+            nodo_pagina* pagina_extra = pagina_en_Tabla(identificador, pagina_siguiente);
+            if (pagina_extra == NULL) {
+                pagina_extra = solicitar_pagina(identificador, pagina->nro_pagina + 1, fd_storage, query_id);
+            }
+            pagina_extra->modificado = true;
+            pagina_extra->uso= true;
+            puntero_marco = list_get(marco, pagina_extra->nro_marco);
+            // Como es una pagina nueva, se escrvira desde la base de la misma (puntero_marco)
+            int bytes_escribir;
+            if (cantidad_paginas_escribir - i == 0) {
+                bytes_escribir = size_restante;
+            } else {
+                bytes_escribir = tam_pagina;
+            } 
 
-        nodo_pagina* pagina_extra = pagina_en_Tabla(identificador, pagina->nro_pagina + 1);
-        if (pagina_extra == NULL) {
-            pagina_extra = solicitar_pagina(identificador, pagina->nro_pagina + 1, fd_storage, query_id);
+            sleep(RETARDO_MEMORIA/1000);
+            memcpy(puntero, datos + (size_dato - size_restante), bytes_escribir);
+            pagina_siguiente++;
+            size_restante -= bytes_escribir;
         }
-        pagina_extra->modificado = true;
-        puntero_marco = list_get(marco, pagina_extra->nro_marco);
-        puntero = puntero_marco; // Como es una pagina nueva, se escrvira desde la base de la misma
-        memcpy(puntero, datos + (size_dato - size_restante), size_restante);
     }
+
 
     log_info(logger_worker, "Query %s: Acción: ESCRIBIR - Dirección Física: %d - Valor: %s", query_id, direccion_base, datos);
 }
@@ -181,22 +201,40 @@ void escribir_pagina(nodo_pagina* pagina, char* identificador, int direccion_bas
 void leer_pagina(nodo_pagina* pagina, char*identificador, int direccion, int size, int fd_storage, int fd_master, char* query_id) {
     int direccion_en_pagina = direccion % tam_pagina;
 
+    pagina->uso = true;
     p_marco puntero_marco = list_get(marco, pagina->nro_marco);
     char* puntero_memoria = puntero_marco + direccion_en_pagina;
     char* lectura = malloc(size);
     if (size <= tam_pagina - direccion_en_pagina) { // si el dato entra en la pagina actual
+        sleep(RETARDO_MEMORIA/1000);
         memcpy(lectura, puntero_memoria, size);
     } else {
         int size_restante = size - direccion_en_pagina;
+        int cantidad_paginas_leer = ceil(size_restante/tam_pagina);
+        int pagina_siguiente = pagina->nro_pagina + 1;
+        
+        sleep(RETARDO_MEMORIA/1000);
         memcpy(lectura, puntero_memoria, size - size_restante);
+        for (int i = 0; i < cantidad_paginas_leer; i++) {  
+            nodo_pagina* pagina_extra = pagina_en_Tabla(identificador, pagina_siguiente);
+            if (pagina_extra == NULL) {
+                pagina_extra = solicitar_pagina(identificador, pagina->nro_pagina + 1, fd_storage, query_id);
+            }
+            pagina_extra->uso= true;
+            puntero_marco = list_get(marco, pagina_extra->nro_marco);
+            // Como es una pagina nueva, se escrvira desde la base de la misma (puntero_marco)
+            int bytes_leer;
+            if (cantidad_paginas_leer - i == 0) {
+                bytes_leer = size_restante;
+            } else {
+                bytes_leer = tam_pagina;
+            } 
 
-        nodo_pagina* pagina_extra = pagina_en_Tabla(identificador, pagina->nro_pagina + 1);
-        if (pagina_extra == NULL) {
-            pagina_extra = solicitar_pagina(identificador, pagina->nro_pagina + 1, fd_storage, query_id);
+            sleep(RETARDO_MEMORIA/1000);
+            memcpy(lectura + (size - size_restante), puntero_marco, bytes_leer);
+            pagina_siguiente++;
+            size_restante -= bytes_leer;
         }
-        puntero_marco = list_get(marco, pagina_extra->nro_marco);
-        puntero_memoria = puntero_marco; // Como es una pagina nueva, se escrvira desde la base de la misma
-        memcpy(lectura + (size - size_restante), puntero_memoria, size_restante);
     }
     
     paquete_t* paquete = crear_paquete(LECTURA_MASTER);
