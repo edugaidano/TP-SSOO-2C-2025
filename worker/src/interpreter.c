@@ -96,12 +96,21 @@ void interpretar_FLUSH(t_instrucion* instruccion, char* query_id, int fd_storage
     agregar_a_paquete(paquete, datos[0], string_length(datos[0]) + 1);              // NOMBRE_FILE
     agregar_a_paquete(paquete, datos[1], string_length(datos[1]) + 1);              // TAG
     string_array_destroy(datos);
-    for (int i = 0; i < list_size(tabla_paginas); i++) {
-        nodo_pagina *pagina = list_get(tabla_paginas, i);
-        if (pagina->modificado && string_equals_ignore_case(pagina->identificador, instruccion->datos[0])) {
-            agregar_a_paquete(paquete, &(pagina->nro_pagina), sizeof(int));
-            agregar_a_paquete(paquete, pagina->puntero, tam_pagina);
-            //reset_pagina(pagina, i, query_id);
+
+    // Busca el la Tabla de Paginas del FILE:TAG
+    for (int i = 0; i < list_size(file_tag_pages); i++) {
+        file_tag* ft = list_get(file_tag_pages, i);
+        if (string_equals_ignore_case(ft->identificador, instruccion->datos[0])) { //??
+            // Busca las paginas presentes y modificadas
+            for (int j = 0; j < list_size(ft->tabla_paginas); j++) {
+                nodo_pagina* pagina = list_get(ft->tabla_paginas, j);
+                if (pagina->modificado && pagina->presencia) {
+                    agregar_a_paquete(paquete, &(pagina->nro_pagina), sizeof(int));
+                    char* info = list_get(marco, pagina->nro_marco);
+                    agregar_a_paquete(paquete, info, tam_pagina);
+                }
+            }
+            break;
         }
     }
     void* paquete_s = serializar_paquete(paquete);
@@ -177,15 +186,17 @@ void interpretar_WRITE(t_instrucion* instruccion, char* query_id, int fd_storage
      * En caso de que la Memoria Interna no cuente con todas las páginas necesarias para satisfacer la operación, 
      * deberá solicitar el contenido faltante al módulo Storage.
      */
+    char* identificador = instruccion->datos[0];
+    int base = atoi(instruccion->datos[1]);
+    char* contenido = instruccion->datos[2];
 
-    // Suponiendo que la BASE es 0 para cada FILE
-    double nro_pagina = ceil(atoi(instruccion->datos[1]) / tam_pagina);
-    nodo_pagina* pagina = pagina_en_Tabla(instruccion->datos[0], nro_pagina);
+    double nro_pagina = ceil(base / tam_pagina);
+    nodo_pagina* pagina = pagina_en_Tabla(identificador, nro_pagina);
     if (pagina == NULL) {
-        pagina = solicitar_pagina(instruccion->datos[0], nro_pagina, fd_storage, query_id);
+        pagina = solicitar_pagina(identificador, nro_pagina, fd_storage, query_id);
     }
 
-    escribir_pagina(pagina, atoi(instruccion->datos[1]), instruccion->datos[2], fd_storage,query_id);
+    escribir_pagina(pagina, identificador, base, contenido, fd_storage, query_id);
     log_ejecucion(OK, instruccion->identificador, query_id);
 }
 
@@ -197,15 +208,17 @@ void interpretar_READ(t_instrucion* instruccion, char* query_id, int fd_storage,
      * En caso de que la Memoria Interna no cuente con todas las páginas necesarias para satisfacer la operación,
      * deberá solicitar el contenido faltante al módulo Storage.
      */
+    char* identificador = instruccion->datos[0];
+    int base = atoi(instruccion->datos[1]);
+    int size = atoi(instruccion->datos[2]);
 
-    // Suponiendo que la BASE es 0 para cada FILE
-    double nro_pagina = ceil(atoi(instruccion->datos[1]) / tam_pagina);
-    nodo_pagina* pagina = pagina_en_Tabla(instruccion->datos[0], nro_pagina);
+    double nro_pagina = ceil(base / tam_pagina);
+    nodo_pagina* pagina = pagina_en_Tabla(identificador, nro_pagina);
     if (pagina == NULL) {
-        pagina = solicitar_pagina(instruccion->datos[0], nro_pagina, fd_storage, query_id);
+        pagina = solicitar_pagina(identificador, nro_pagina, fd_storage, query_id);
     }
 
-    leer_pagina(pagina, atoi(instruccion->datos[1]), atoi(instruccion->datos[2]), fd_storage, fd_master, query_id);
+    leer_pagina(pagina, identificador, base, size, fd_storage, fd_master, query_id);
     log_ejecucion(OK, instruccion->identificador, query_id);
 }
 

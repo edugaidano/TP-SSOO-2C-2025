@@ -35,6 +35,24 @@ void *storage_worker_handler(void *arg)
                      id_worker, CANT_WORKERS);
             break;
         }
+        case INFO_FILE_TAG_STORAGE:
+        {
+            char* file = list_get(package, 0);
+            char* tag = list_get(package, 1);
+            // TODO: buscar el tamaño total del file:tag
+            // Nota: otra opcion es pasar la cantidad de bloques, habria que modificar un poco la logica en Worker
+
+            paquete_t* size_tag_file = crear_paquete(INFO_FILE_TAG_WORKER);
+            agregar_a_paquete(size_tag_file, &(int){100}, sizeof(int));
+
+            // Envia resultado fijo
+            enviar_paquete(socket, size_tag_file, logger_storage);
+
+            log_info(logger_storage,
+                     "El Worker <%s> Solicito informacion sobre %s:%s",
+                     id_worker, file, tag);
+            break;
+        }
         case INSTRUCCION_STORAGE:
         {
             // TODO: desglosar paquete en el futuro
@@ -62,10 +80,11 @@ void *storage_worker_handler(void *arg)
             // Envia contenido fijo del bloque/página
             char *contenido_fijo = "A";
             agregar_a_paquete(page_package, contenido_fijo, strlen(contenido_fijo) + 1);
-
+            /*
             // Envia número de página ficticio
             double pagina = 0.0;
             agregar_a_paquete(page_package, &pagina, sizeof(double));
+            */
 
             enviar_paquete(socket, page_package, logger_storage);
 

@@ -19,8 +19,9 @@ extern int RETARDO_MEMORIA;
 extern int ALGORITMO_REEMPLAZO;
 extern void *memoria;
 extern int tam_pagina;
-extern t_list* tabla_paginas;
-extern bool* bit_map_tabla_paginas;
+extern t_list* marco;
+extern t_list* file_tag_pages;
+extern bool* bit_map_marco;
 extern int cantidad_paginas;
 
 typedef struct {
@@ -30,11 +31,19 @@ typedef struct {
 } t_instrucion;
 
 typedef struct {
-    char* puntero;
+    int nro_pagina;
+    int nro_marco;
     bool modificado;
-    char* identificador;
-    double nro_pagina;
+    bool uso;
+    bool presencia;
 } nodo_pagina;
 
+typedef struct {
+    char* identificador;  // FILE:TAG
+    int cantidad_paginas; // Debe ser mayor a 0
+    t_list* tabla_paginas;//Lista de nodo_pagina
+} file_tag; 
+
+typedef char* p_marco;
 
 #endif

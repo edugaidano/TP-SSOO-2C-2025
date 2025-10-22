@@ -121,7 +121,7 @@ int main(int argc, char *argv[])
     // Liveracion de Recursos
     config_destroy(config_worker);
     log_destroy(logger_worker);
-    // list_destroy_and_destroy_elements(tabla_paginas, destruir_paginas); TODO
+    // list_destroy_and_destroy_elements(marco, destruir_paginas); TODO
     free(memoria);
 
     return 0;
