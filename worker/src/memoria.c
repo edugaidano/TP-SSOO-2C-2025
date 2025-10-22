@@ -98,7 +98,7 @@ file_tag* agregar_file_tag_en_memoria(char* identificador, int fd_storage) {
     }
     list_add(file_tag_pages, ft);
 
-    liverar_buffer(buffer);
+    free_buffer(buffer);
     destruir_paquete(paquete);
     return ft;
 }
@@ -143,7 +143,7 @@ nodo_pagina* solicitar_pagina(char* identificador, int nro_pagina, int fd_storag
     pagina->presencia = true;
     p_marco puntero = list_get(marco, indice);
     memcpy(puntero, buffer->stream, buffer->size);
-    liverar_buffer(buffer);
+    free_buffer(buffer);
     destruir_paquete(paquete);
     
     ft->cantidad_paginas++; 

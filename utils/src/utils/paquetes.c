@@ -33,11 +33,11 @@ void enviar_paquete(int socket, paquete_t *paquete, t_log *logger)
 
 void destruir_paquete(paquete_t *paquete)
 {
-    liverar_buffer(paquete->buffer);
+    free_buffer(paquete->buffer);
     free(paquete);
 }
 
-void liverar_buffer(buffer_t *buffer)
+void free_buffer(buffer_t *buffer)
 {
     free(buffer->stream);
     free(buffer);

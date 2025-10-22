@@ -45,15 +45,15 @@ int main(int argc, char *argv[])
 
         buffer_t *buffer = obtener_siguiente_item(paquete_query);
         char *path = string_from_format("%s/%s", PATH_SCRIPTS, (char *){buffer->stream});
-        liverar_buffer(buffer);
+        free_buffer(buffer);
 
         buffer = obtener_siguiente_item(paquete_query);
         char *query_id = string_itoa(*(int *){buffer->stream});
-        liverar_buffer(buffer);
+        free_buffer(buffer);
 
         buffer = obtener_siguiente_item(paquete_query);
         int pc = *(int *){buffer->stream};
-        liverar_buffer(buffer);
+        free_buffer(buffer);
 
         destruir_paquete(paquete_query);
 

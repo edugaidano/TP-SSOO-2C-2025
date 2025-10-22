@@ -100,7 +100,7 @@ void interpretar_FLUSH(t_instrucion* instruccion, char* query_id, int fd_storage
     // Busca el la Tabla de Paginas del FILE:TAG
     for (int i = 0; i < list_size(file_tag_pages); i++) {
         file_tag* ft = list_get(file_tag_pages, i);
-        if (string_equals_ignore_case(ft->identificador, instruccion->datos[0])) { //??
+        if (string_equals_ignore_case(ft->identificador, instruccion->datos[0])) {
             // Busca las paginas presentes y modificadas
             for (int j = 0; j < list_size(ft->tabla_paginas); j++) {
                 nodo_pagina* pagina = list_get(ft->tabla_paginas, j);

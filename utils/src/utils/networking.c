@@ -67,7 +67,7 @@ int create_server(char *PORT, t_log *log)
 
 int accept_connection(int server_socket, t_log *log)
 {
-    struct sockaddr_storage their_addr;
+    struct sockaddr their_addr;
     socklen_t addr_size;
 
     addr_size = sizeof(their_addr);
