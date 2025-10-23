@@ -8,8 +8,9 @@ void init_memoria() {
     cantidad_marcos = TAM_MEMORIA/tam_pagina;
     marco = list_create();
     for (int i = 0; i < cantidad_marcos; i++) {
-        p_marco puntero = (char*)memoria + i * tam_pagina;
-        list_add(marco, puntero);
+        nodo_marco* n_marco = malloc(sizeof(nodo_marco));
+        n_marco->puntero_marco = (char*)memoria + i * tam_pagina;
+        list_add(marco, n_marco);
     }
     
     // bitmap
@@ -21,6 +22,11 @@ void init_memoria() {
     // Lista de paginas x File:TAG
     file_tag_pages = list_create();
 
+    if (string_equals_ignore_case(ALGORITMO_REEMPLAZO, "CLOCK-M")) {
+        nodo_marco* n_marco = list_get(marco, 0);
+        victima_clock = n_marco;
+    }
+    
     log_info(logger_worker, "Memoria iniciada");
 }
 
@@ -103,6 +109,12 @@ file_tag* agregar_file_tag_en_memoria(char* identificador, int fd_storage) {
     return ft;
 }
 
+void free_file_tag(file_tag* ft) {
+    list_destroy_and_destroy_elements(ft->tabla_paginas, free);
+    free(ft->identificador);
+    free(ft);
+}
+
 nodo_pagina* solicitar_pagina(char* identificador, int nro_pagina, int fd_storage, char* query_id) {
     char **datos = string_split(identificador, ":");
     log_info(logger_worker, "Query %s: - Memoria Miss - File: %s - Tag: %s - Pagina: %d", query_id, datos[0], datos[1], nro_pagina);
@@ -141,8 +153,10 @@ nodo_pagina* solicitar_pagina(char* identificador, int nro_pagina, int fd_storag
     nodo_pagina* pagina = list_get(ft->tabla_paginas, nro_pagina);
     pagina->nro_marco = indice;
     pagina->presencia = true;
-    p_marco puntero = list_get(marco, indice);
-    memcpy(puntero, buffer->stream, buffer->size);
+    nodo_marco* n_marco = list_get(marco, indice);
+    memcpy(n_marco->puntero_marco, buffer->stream, buffer->size);
+    n_marco->identificador = ft->identificador;
+    n_marco->pagina = pagina;
     free_buffer(buffer);
     destruir_paquete(paquete);
     
@@ -156,14 +170,19 @@ void escribir_pagina(nodo_pagina* pagina, char* identificador, int direccion_bas
     int direccion_en_pagina = direccion_base % tam_pagina;
     int size_dato = string_length(datos) + 1;
 
-    p_marco puntero_marco = list_get(marco, pagina->nro_marco);
-    char* puntero = puntero_marco + direccion_en_pagina;
+    nodo_marco* n_marco = list_get(marco, pagina->nro_marco);
+
+    char* puntero = n_marco->puntero_marco + direccion_en_pagina;
     pagina->modificado = true;
     pagina->uso = true;
 
     if (size_dato <= tam_pagina - direccion_en_pagina) { // si el dato entra en la pagina actual
         sleep(RETARDO_MEMORIA/1000);
         memcpy(puntero, datos, size_dato);
+        if (string_equals_ignore_case(ALGORITMO_REEMPLAZO, "LRU")) {
+            n_marco->time = temporal_gettime(cronometro);
+        }
+        
     } else {
         int size_restante = size_dato - direccion_en_pagina;
         int cantidad_paginas_escribir = ceil(size_restante/tam_pagina);
@@ -171,6 +190,9 @@ void escribir_pagina(nodo_pagina* pagina, char* identificador, int direccion_bas
         
         sleep(RETARDO_MEMORIA/1000);
         memcpy(puntero, datos, size_dato - size_restante);
+        if (string_equals_ignore_case(ALGORITMO_REEMPLAZO, "LRU")) {
+            n_marco->time = temporal_gettime(cronometro);
+        }
         for (int i = 0; i < cantidad_paginas_escribir; i++) {  
             nodo_pagina* pagina_extra = pagina_en_Tabla(identificador, pagina_siguiente);
             if (pagina_extra == NULL) {
@@ -178,7 +200,7 @@ void escribir_pagina(nodo_pagina* pagina, char* identificador, int direccion_bas
             }
             pagina_extra->modificado = true;
             pagina_extra->uso= true;
-            puntero_marco = list_get(marco, pagina_extra->nro_marco);
+            n_marco = list_get(marco, pagina_extra->nro_marco);
             // Como es una pagina nueva, se escrvira desde la base de la misma (puntero_marco)
             int bytes_escribir;
             if (cantidad_paginas_escribir - i == 0) {
@@ -188,7 +210,10 @@ void escribir_pagina(nodo_pagina* pagina, char* identificador, int direccion_bas
             } 
 
             sleep(RETARDO_MEMORIA/1000);
-            memcpy(puntero, datos + (size_dato - size_restante), bytes_escribir);
+            memcpy(n_marco->puntero_marco, datos + (size_dato - size_restante), bytes_escribir);
+            if (string_equals_ignore_case(ALGORITMO_REEMPLAZO, "LRU")) {
+                n_marco->time = temporal_gettime(cronometro);
+            }
             pagina_siguiente++;
             size_restante -= bytes_escribir;
         }
@@ -202,12 +227,15 @@ void leer_pagina(nodo_pagina* pagina, char*identificador, int direccion, int siz
     int direccion_en_pagina = direccion % tam_pagina;
 
     pagina->uso = true;
-    p_marco puntero_marco = list_get(marco, pagina->nro_marco);
-    char* puntero_memoria = puntero_marco + direccion_en_pagina;
+    nodo_marco* n_marco = list_get(marco, pagina->nro_marco);
+    char* puntero_memoria = n_marco->puntero_marco + direccion_en_pagina;
     char* lectura = malloc(size);
     if (size <= tam_pagina - direccion_en_pagina) { // si el dato entra en la pagina actual
         sleep(RETARDO_MEMORIA/1000);
         memcpy(lectura, puntero_memoria, size);
+        if (string_equals_ignore_case(ALGORITMO_REEMPLAZO, "LRU")) {
+            n_marco->time = temporal_gettime(cronometro);
+        }
     } else {
         int size_restante = size - direccion_en_pagina;
         int cantidad_paginas_leer = ceil(size_restante/tam_pagina);
@@ -215,14 +243,17 @@ void leer_pagina(nodo_pagina* pagina, char*identificador, int direccion, int siz
         
         sleep(RETARDO_MEMORIA/1000);
         memcpy(lectura, puntero_memoria, size - size_restante);
+        if (string_equals_ignore_case(ALGORITMO_REEMPLAZO, "LRU")) {
+            n_marco->time = temporal_gettime(cronometro);
+        }
         for (int i = 0; i < cantidad_paginas_leer; i++) {  
             nodo_pagina* pagina_extra = pagina_en_Tabla(identificador, pagina_siguiente);
             if (pagina_extra == NULL) {
                 pagina_extra = solicitar_pagina(identificador, pagina->nro_pagina + 1, fd_storage, query_id);
             }
             pagina_extra->uso= true;
-            puntero_marco = list_get(marco, pagina_extra->nro_marco);
-            // Como es una pagina nueva, se escrvira desde la base de la misma (puntero_marco)
+            n_marco = list_get(marco, pagina_extra->nro_marco);
+            // Como es una pagina nueva, se leera desde la base de la misma (puntero_marco)
             int bytes_leer;
             if (cantidad_paginas_leer - i == 0) {
                 bytes_leer = size_restante;
@@ -231,7 +262,10 @@ void leer_pagina(nodo_pagina* pagina, char*identificador, int direccion, int siz
             } 
 
             sleep(RETARDO_MEMORIA/1000);
-            memcpy(lectura + (size - size_restante), puntero_marco, bytes_leer);
+            memcpy(lectura + (size - size_restante), n_marco->puntero_marco, bytes_leer);
+            if (string_equals_ignore_case(ALGORITMO_REEMPLAZO, "LRU")) {
+                n_marco->time = temporal_gettime(cronometro);
+            }
             pagina_siguiente++;
             size_restante -= bytes_leer;
         }
@@ -247,7 +281,7 @@ void leer_pagina(nodo_pagina* pagina, char*identificador, int direccion, int siz
     }
     
     resultado_t result;
-    if (recv(fd_master, &result, espacio_paquete_serializado(paquete), 0) <= 0) {
+    if (recv(fd_master, &result, sizeof(resultado_t), 0) <= 0) {
         log_error(logger_worker, "Error o desconeccion en Master al recibir un resultado de la lectura");
         exit(EXIT_FAILURE);
     }

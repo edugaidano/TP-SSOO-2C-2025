@@ -6,23 +6,7 @@
 #include <commons/log.h>
 #include <commons/config.h>
 #include <commons/collections/list.h>
-
-extern t_log *logger_worker;
-extern t_config *config_worker;
-extern char *IP_MASTER;
-extern char *PUERTO_MASTER;
-extern char *IP_STORAGE;
-extern char *PUERTO_STORAGE;
-extern char *PATH_SCRIPTS;
-extern int TAM_MEMORIA;
-extern int RETARDO_MEMORIA;
-extern int ALGORITMO_REEMPLAZO;
-extern void *memoria;
-extern int tam_pagina;
-extern t_list* marco;
-extern t_list* file_tag_pages;
-extern bool* bit_map_marco;
-extern int cantidad_marcos;
+#include <commons/temporal.h>
 
 typedef struct {
     set_instrucciones copi;
@@ -44,6 +28,31 @@ typedef struct {
     t_list* tabla_paginas;//Lista de nodo_pagina
 } file_tag; 
 
-typedef char* p_marco;
+typedef struct nodo_marco{
+    char* puntero_marco; // Direccion en memoria
+    char* identificador; // Apunta a un FILE:TAG (definido en un file_tag)
+    nodo_pagina* pagina; // Apunta a la pagina asociada
+    int64_t time;        // Necesario para LRU
+} nodo_marco;
+
+extern t_log *logger_worker;
+extern t_config *config_worker;
+extern char *IP_MASTER;
+extern char *PUERTO_MASTER;
+extern char *IP_STORAGE;
+extern char *PUERTO_STORAGE;
+extern char *PATH_SCRIPTS;
+extern int TAM_MEMORIA;
+extern int RETARDO_MEMORIA;
+extern char* ALGORITMO_REEMPLAZO;
+extern void *memoria;
+extern int tam_pagina;
+extern t_list* marco;
+extern t_list* file_tag_pages;
+extern bool* bit_map_marco;
+extern int cantidad_marcos;
+extern t_temporal* cronometro; // Para LRU
+extern nodo_marco* victima_clock;    // Para CLOCK_M
+extern int (*algoritmo_reemplazo)(int, char*);
 
 #endif

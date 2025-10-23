@@ -72,6 +72,31 @@ void *storage_worker_handler(void *arg)
                      id_worker, result);
             break;
         }
+        case MODIFICACIONES_STORAGE:
+        {
+            char* file = list_get(package, 0);
+            char* tag = list_get(package, 1);
+            int nro_pagina = *(int*)list_get(package, 2);
+            char* contenido = list_get(package, 3);
+            
+            // TODO: modificar la pagina
+
+            resultado_t result = STORAGE_RESULT_OK; 
+
+            // Envia resultado fijo
+            if (send(socket, &result, sizeof(resultado_t), 0) <= 0)
+            {
+                log_error(logger_storage,
+                          "Error o desconexión al enviar el resultado de la instrucción");
+                close(socket);
+                return NULL;
+            }
+
+            log_info(logger_storage,
+                     "Worker <%s> - Modificaciones realizadas sobre %s:%s en la pagina %d",
+                     id_worker, file, tag, nro_pagina);
+            break;
+        }
         case SOLICITUD_STORAGE:
         {
             // TODO: en futuros checks enviar datos reales
