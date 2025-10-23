@@ -146,7 +146,7 @@ nodo_pagina* solicitar_pagina(char* identificador, int nro_pagina, int fd_storag
 
     int indice = marco_libre();
     if (indice == -1) {
-        // indice = liverar_pagina(); // TODO
+        indice = algoritmo_reemplazo(fd_storage, identificador);
     }
     log_info(logger_worker, "Query %s: Se asigna el Marco: %i a la Página: %i perteneciente al - File: %s - Tag: %s", query_id, indice, nro_pagina, datos[0], datos[1]);
     bit_map_marco[indice] = true;
