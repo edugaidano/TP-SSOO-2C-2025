@@ -1,7 +1,7 @@
 #ifndef _UTILS_OP_CODES_H_
 #define _UTILS_OP_CODES_H_
 
-typedef enum
+typedef enum opcodes
 {
     DESCONEXION = -1,
     HANDSHAKE_QUERY_MASTER,
@@ -25,13 +25,13 @@ typedef enum
     MODIFICACIONES_STORAGE
 } op_code;
 
-typedef enum
+typedef enum notif_query_control
 {
     NOTIF_READ,
     NOTIF_FINAL
 } notif_query_control;
 
-typedef enum
+typedef enum razon_fin
 {
     FINALIZACION_CORRECTA,
     ERR_DESC_WORKER

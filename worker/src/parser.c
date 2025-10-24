@@ -76,8 +76,8 @@ t_list* parsear_archivo(char* path_archivo_query) {
     return instrucciones;
 }
 
-void destruir_instrucciones(void* arg) {
-    t_instrucion* instruccion = arg;
+void destruir_instruccion(void* arg) {
+    t_instrucion* instruccion = (t_instrucion*) arg;
     string_array_destroy(instruccion->datos);
     free(instruccion->identificador);
     free(instruccion);

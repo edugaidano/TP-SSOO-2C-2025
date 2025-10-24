@@ -7,6 +7,6 @@
 #include <stdlib.h>
 
 t_list* parsear_archivo(char* path_archivo_query);
-void destruir_instrucciones(void* arg);
+void destruir_instruccion(void* arg);
 
 #endif

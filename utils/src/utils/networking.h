@@ -21,7 +21,7 @@
 #include <utils/paquetes.h>
 #include <utils/op_codes.h>
 
-typedef enum
+typedef enum resultado_t
 {
     OK,
     ERROR

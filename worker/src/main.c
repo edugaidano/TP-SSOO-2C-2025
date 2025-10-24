@@ -118,7 +118,7 @@ int main(int argc, char *argv[])
         }
 
         free(query_id);
-        list_destroy_and_destroy_elements(instrucciones, destruir_instrucciones);
+        list_destroy_and_destroy_elements(instrucciones, destruir_instruccion);
     }
 
     // Liberacion de Recursos

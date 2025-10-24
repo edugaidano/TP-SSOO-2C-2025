@@ -1,7 +1,7 @@
 #ifndef SET_INSTRUCCIONES_H
 #define SET_INSTRUCCIONES_H
 
-typedef enum {
+typedef enum set_instrucciones {
     CREATE,
     TRUNCATE,
     WRITE,
