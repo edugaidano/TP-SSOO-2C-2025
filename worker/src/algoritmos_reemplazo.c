@@ -107,6 +107,7 @@ int actualizar_pagina (nodo_pagina* pagina) {
     bit_map_marco[nro_marco] = false;
     pagina->presencia = false;
     pagina->modificado = false;
+    //log_info(logger_worker, "Query %s: Se libera el Marco: %d perteneciente al - File: %s - Tag: %s", query_id, pagina->nro_marco, datos[0], datos[1]);
     return nro_marco;
 }
 

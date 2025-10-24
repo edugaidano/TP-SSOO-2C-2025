@@ -1,4 +1,4 @@
-#include <worker_main.h>
+#include "worker_main.h"
 
 int main(int argc, char *argv[])
 {
@@ -59,6 +59,7 @@ int main(int argc, char *argv[])
 
         log_info(logger_worker, "## Query %s: Se recibe la Query. El path de operaciones es: %s", query_id, path);
 
+        // Parsea el archivo de la query
         instrucciones = parsear_archivo(path);
         free(path);
 
@@ -109,7 +110,8 @@ int main(int argc, char *argv[])
             recv(master_socket, &resultado, sizeof(bool), MSG_WAITALL);
             if (resultado)  {
                 log_info(logger_worker, "Se recibio una interrupcion de la query por parte del Master");
-                break; // sale del while y espera un nuevo query (Aqui se puede agregar un paquete si es necesario para el master)
+                // sale del while y espera un nuevo query (Aqui se puede agregar un paquete si es necesario para el master)
+                break;
             }
 
             pc++;
@@ -118,11 +120,16 @@ int main(int argc, char *argv[])
         list_destroy_and_destroy_elements(instrucciones, destruir_instrucciones);
     }
 
-    // Liveracion de Recursos
+    // Liberacion de Recursos
+    if (string_equals_ignore_case(ALGORITMO_REEMPLAZO, "LRU")) {
+        temporal_destroy(cronometro);
+    }
     config_destroy(config_worker);
     log_destroy(logger_worker);
-    // list_destroy_and_destroy_elements(marco, destruir_paginas); TODO
+    list_destroy_and_destroy_elements(file_tag_pages, free_file_tag);
+    list_destroy_and_destroy_elements(marco, free);
     free(memoria);
+    free(bit_map_marco);
 
     return 0;
 }

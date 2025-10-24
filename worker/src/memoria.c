@@ -65,13 +65,6 @@ nodo_pagina* pagina_en_Tabla(char* identificador, double nro_pagina) {
     return NULL;
 }
 
-void free_marco(nodo_pagina* pagina, char* identificador, char* query_id) {
-    bit_map_marco[pagina->nro_marco] = false;
-    char** datos = string_split(identificador, ":");
-    log_info(logger_worker, "Query %s: Se libera el Marco: %d perteneciente al - File: %s - Tag: %s", query_id, pagina->nro_marco, datos[0], datos[1]);
-    string_array_destroy(datos);
-}
-
 file_tag* agregar_file_tag_en_memoria(char* identificador, int fd_storage) {
     char **datos = string_split(identificador, ":");
     paquete_t* paquete = crear_paquete(INFO_FILE_TAG_STORAGE);
@@ -109,7 +102,8 @@ file_tag* agregar_file_tag_en_memoria(char* identificador, int fd_storage) {
     return ft;
 }
 
-void free_file_tag(file_tag* ft) {
+void free_file_tag(void* arg) {
+    file_tag* ft = (file_tag*)arg;
     list_destroy_and_destroy_elements(ft->tabla_paginas, free);
     free(ft->identificador);
     free(ft);
