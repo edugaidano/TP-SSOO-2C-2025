@@ -13,7 +13,7 @@ int main(int argc, char *argv[])
     char ack[4];
 
     // Handshake con Storage
-    int storage_socket = connect_to_server(IP_STORAGE, PUERTO_STORAGE, logger_worker);
+    storage_socket = connect_to_server(IP_STORAGE, PUERTO_STORAGE, logger_worker);
     paquete_t *handshake_storage = crear_paquete(HANDSHAKE_WORKER_STORAGE);
     agregar_a_paquete(handshake_storage, argv[2], strlen(argv[2]) + 1);
     enviar_paquete(storage_socket, handshake_storage, logger_worker);
@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
     log_info(logger_worker, "se confirma la conexion con storage, tamaño de pagina: %d", tam_pagina);
 
     // Handshake con Master
-    int master_socket = connect_to_server(IP_MASTER, PUERTO_MASTER, logger_worker);
+    master_socket = connect_to_server(IP_MASTER, PUERTO_MASTER, logger_worker);
     paquete_t *handshake_master = crear_paquete(HANDSHAKE_WORKER_MASTER);
     agregar_a_paquete(handshake_master, argv[2], strlen(argv[2]) + 1);
     enviar_paquete(master_socket, handshake_master, logger_worker);
@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
         free_buffer(buffer);
 
         buffer = obtener_siguiente_item(paquete_query);
-        char *query_id = string_itoa(*(int *){buffer->stream});
+        query_id = string_itoa(*(int *){buffer->stream});
         free_buffer(buffer);
 
         buffer = obtener_siguiente_item(paquete_query);
@@ -71,31 +71,31 @@ int main(int argc, char *argv[])
 
             switch (instruccion->copi) {
             case CREATE:
-                interpretar_CREATE(instruccion, query_id, storage_socket);
+                interpretar_CREATE(instruccion);
                 break;
             case COMMIT:
-                interpretar_COMMIT(instruccion, query_id, storage_socket);
+                interpretar_COMMIT(instruccion);
                 break;
             case DELETE:
-                interpretar_DELETE(instruccion, query_id, storage_socket);
+                interpretar_DELETE(instruccion);
                 break;
             case FLUSH:
-                interpretar_FLUSH(instruccion, query_id, storage_socket);
+                interpretar_FLUSH(instruccion);
                 break;
             case TRUNCATE:
-                interpretar_TRUNCATE(instruccion, query_id, storage_socket);
+                interpretar_TRUNCATE(instruccion);
                 break;
             case TAG:
-                interpretar_TAG(instruccion, query_id, storage_socket);
+                interpretar_TAG(instruccion);
                 break;
             case READ:
-                interpretar_READ(instruccion, query_id, storage_socket, master_socket);
+                interpretar_READ(instruccion);
                 break;
             case WRITE:
-                interpretar_WRITE(instruccion, query_id, storage_socket);
+                interpretar_WRITE(instruccion);
                 break;
             default: // END
-                interpretar_END(instruccion, query_id, master_socket);
+                interpretar_END(instruccion);
                 fin = true; // Sale del while y elimina la query
                 break;
             }
@@ -117,6 +117,7 @@ int main(int argc, char *argv[])
             pc++;
         }
 
+        free(query_id);
         list_destroy_and_destroy_elements(instrucciones, destruir_instrucciones);
     }
 
@@ -130,6 +131,8 @@ int main(int argc, char *argv[])
     list_destroy_and_destroy_elements(marco, free);
     free(memoria);
     free(bit_map_marco);
+    close(master_socket);
+    close(storage_socket);
 
     return 0;
 }

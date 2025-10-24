@@ -1,6 +1,6 @@
 #include <interpreter.h>
 
-void log_ejecucion(resultado_t resultado, char* instruccion, char* query_id) {
+void log_ejecucion(resultado_t resultado, char* instruccion) {
     switch (resultado) {
         case OK:
             log_info(logger_worker, "## Query %s: - Instrucción realizada: %s", query_id, instruccion);
@@ -31,7 +31,7 @@ resultado_t resultado_instruccion(int fd, char* modulo, char* instruccion) {
     return resultado;
 }
 
-void instruccion_simple_storage(t_instrucion* instruccion, char* query_id, int fd_storage) {
+void instruccion_simple_storage(t_instrucion* instruccion) {
     // Formato: <COPI> <NOMBRE_FILE>:<TAG>
     char **datos = string_split(instruccion->datos[0], ":");
 
@@ -42,26 +42,26 @@ void instruccion_simple_storage(t_instrucion* instruccion, char* query_id, int f
     string_array_destroy(datos);
     void* paquete_s = serializar_paquete(paquete);
 
-    enviar_paquete_a(paquete_s, espacio_paquete_serializado(paquete), fd_storage, "Storage", instruccion->identificador);
+    enviar_paquete_a(paquete_s, espacio_paquete_serializado(paquete), storage_socket, "Storage", instruccion->identificador);
     destruir_paquete(paquete);
     free(paquete_s);
 
-    resultado_t resultado = resultado_instruccion(fd_storage, "Storage", instruccion->identificador);
-    log_ejecucion(resultado, instruccion->identificador, query_id);
+    resultado_t resultado = resultado_instruccion(storage_socket, "Storage", instruccion->identificador);
+    log_ejecucion(resultado, instruccion->identificador);
 }
 
 // ---- interpretar_instruccion ---- //
 
-void interpretar_CREATE(t_instrucion* instruccion, char* query_id, int fd_storage) {
+void interpretar_CREATE(t_instrucion* instruccion) {
     /*
      * Formato: CREATE <NOMBRE_FILE>:<TAG>
      * La instrucción CREATE solicitará al módulo Storage la creación de un nuevo File con el Tag recibido por parámetro y con tamaño 0.
      */
 
-    instruccion_simple_storage(instruccion, query_id, fd_storage);
+    instruccion_simple_storage(instruccion);
 }
 
-void interpretar_COMMIT(t_instrucion* instruccion, char* query_id, int fd_storage) {
+void interpretar_COMMIT(t_instrucion* instruccion) {
     /*
      * Formato: COMMIT <NOMBRE_FILE>:<TAG>
      * La instrucción COMMIT, le indicará al Storage que no se realizarán más cambios sobre el File y Tag pasados por parámetro.
@@ -70,21 +70,21 @@ void interpretar_COMMIT(t_instrucion* instruccion, char* query_id, int fd_storag
     instruccion_flush->copi = FLUSH;
     instruccion_flush->datos = instruccion->datos;
     instruccion_flush->identificador = string_duplicate("FLUSH");
-    interpretar_FLUSH(instruccion_flush, query_id, fd_storage);
+    interpretar_FLUSH(instruccion_flush);
     
-    instruccion_simple_storage(instruccion, query_id, fd_storage);
+    instruccion_simple_storage(instruccion);
 }
 
-void interpretar_DELETE(t_instrucion* instruccion, char* query_id, int fd_storage) {
+void interpretar_DELETE(t_instrucion* instruccion) {
     /*
      * Formato: DELETE <NOMBRE_FILE>:<TAG>
      * La instrucción DELETE solicitará al módulo Storage la eliminación del File:Tag correspondiente.
      */
 
-    instruccion_simple_storage(instruccion, query_id, fd_storage);
+    instruccion_simple_storage(instruccion);
 }
 
-void interpretar_FLUSH(t_instrucion* instruccion, char* query_id, int fd_storage) {
+void interpretar_FLUSH(t_instrucion* instruccion) {
     /*
      * Formato: FLUSH <NOMBRE_FILE>:<TAG>
      * Persistirá todas las modificaciones realizadas en Memoria Interna de un File:Tag en el Storage.
@@ -115,15 +115,15 @@ void interpretar_FLUSH(t_instrucion* instruccion, char* query_id, int fd_storage
     }
     void* paquete_s = serializar_paquete(paquete);
     
-    enviar_paquete_a(paquete_s, espacio_paquete_serializado(paquete), fd_storage, "Storage", instruccion->identificador);
+    enviar_paquete_a(paquete_s, espacio_paquete_serializado(paquete), storage_socket, "Storage", instruccion->identificador);
     destruir_paquete(paquete);
     free(paquete_s);
 
-    resultado_t resultado = resultado_instruccion(fd_storage, "Storage", instruccion->identificador);
-    log_ejecucion(resultado, instruccion->identificador, query_id);    
+    resultado_t resultado = resultado_instruccion(storage_socket, "Storage", instruccion->identificador);
+    log_ejecucion(resultado, instruccion->identificador);    
 }
 
-void interpretar_TRUNCATE(t_instrucion* instruccion, char* query_id, int fd_storage) {
+void interpretar_TRUNCATE(t_instrucion* instruccion) {
     /*
      * Formato: TRUNCATE <NOMBRE_FILE>:<TAG> <TAMAÑO>
      * La instrucción TRUNCATE solicitará al módulo Storage la modificación del tamaño del File y Tag indicados, 
@@ -145,15 +145,15 @@ void interpretar_TRUNCATE(t_instrucion* instruccion, char* query_id, int fd_stor
     agregar_a_paquete(paquete, &size, sizeof(int));                                  // TAMAÑO
     void* paquete_s = serializar_paquete(paquete);
 
-    enviar_paquete_a(paquete_s, espacio_paquete_serializado(paquete), fd_storage, "Storage", instruccion->identificador);
+    enviar_paquete_a(paquete_s, espacio_paquete_serializado(paquete), storage_socket, "Storage", instruccion->identificador);
     destruir_paquete(paquete);
     free(paquete_s);
 
-    resultado_t resultado = resultado_instruccion(fd_storage, "Storage", instruccion->identificador);
-    log_ejecucion(resultado, instruccion->identificador, query_id);
+    resultado_t resultado = resultado_instruccion(storage_socket, "Storage", instruccion->identificador);
+    log_ejecucion(resultado, instruccion->identificador);
 }
 
-void interpretar_TAG(t_instrucion* instruccion, char* query_id, int fd_storage) {
+void interpretar_TAG(t_instrucion* instruccion) {
     /*
      * Formato: TAG <NOMBRE_FILE_ORIGEN>:<TAG_ORIGEN> <NOMBRE_FILE_DESTINO>:<TAG_DESTINO>
      * La instrucción TAG solicitará al módulo Storage la creación un nuevo File:Tag a partir del File y Tag origen pasados por parámetro.
@@ -171,15 +171,15 @@ void interpretar_TAG(t_instrucion* instruccion, char* query_id, int fd_storage) 
     string_array_destroy(datos1);
     void* paquete_s = serializar_paquete(paquete);
 
-    enviar_paquete_a(paquete_s, espacio_paquete_serializado(paquete), fd_storage, "Storage", instruccion->identificador);
+    enviar_paquete_a(paquete_s, espacio_paquete_serializado(paquete), storage_socket, "Storage", instruccion->identificador);
     destruir_paquete(paquete);
     free(paquete_s);
 
-    resultado_t resultado = resultado_instruccion(fd_storage, "Storage", instruccion->identificador);
-    log_ejecucion(resultado, instruccion->identificador, query_id);
+    resultado_t resultado = resultado_instruccion(storage_socket, "Storage", instruccion->identificador);
+    log_ejecucion(resultado, instruccion->identificador);
 }
 
-void interpretar_WRITE(t_instrucion* instruccion, char* query_id, int fd_storage) {
+void interpretar_WRITE(t_instrucion* instruccion) {
     /*
      * Formato: WRITE <NOMBRE_FILE>:<TAG> <DIRECCIÓN BASE> <CONTENIDO>
      * La instrucción WRITE escribirá en la Memoria Interna los bytes correspondientes a partir de la dirección base del File:Tag. 
@@ -193,14 +193,14 @@ void interpretar_WRITE(t_instrucion* instruccion, char* query_id, int fd_storage
     double nro_pagina = ceil(base / tam_pagina);
     nodo_pagina* pagina = pagina_en_Tabla(identificador, nro_pagina);
     if (pagina == NULL) {
-        pagina = solicitar_pagina(identificador, nro_pagina, fd_storage, query_id);
+        pagina = solicitar_pagina(identificador, nro_pagina, storage_socket, query_id);
     }
 
-    escribir_pagina(pagina, identificador, base, contenido, fd_storage, query_id);
-    log_ejecucion(OK, instruccion->identificador, query_id);
+    escribir_pagina(pagina, identificador, base, contenido, storage_socket, query_id);
+    log_ejecucion(OK, instruccion->identificador);
 }
 
-void interpretar_READ(t_instrucion* instruccion, char* query_id, int fd_storage, int fd_master) {
+void interpretar_READ(t_instrucion* instruccion) {
     /*
      * Formato: READ <NOMBRE_FILE>:<TAG> <DIRECCIÓN BASE> <TAMAÑO>
      * La instrucción READ leerá de la Memoria Interna los bytes correspondientes a partir de la dirección base del File y Tag 
@@ -215,14 +215,14 @@ void interpretar_READ(t_instrucion* instruccion, char* query_id, int fd_storage,
     double nro_pagina = ceil(base / tam_pagina);
     nodo_pagina* pagina = pagina_en_Tabla(identificador, nro_pagina);
     if (pagina == NULL) {
-        pagina = solicitar_pagina(identificador, nro_pagina, fd_storage, query_id);
+        pagina = solicitar_pagina(identificador, nro_pagina, storage_socket, query_id);
     }
 
-    leer_pagina(pagina, identificador, base, size, fd_storage, fd_master, query_id);
-    log_ejecucion(OK, instruccion->identificador, query_id);
+    leer_pagina(pagina, identificador, base, size, storage_socket, master_socket, query_id);
+    log_ejecucion(OK, instruccion->identificador);
 }
 
-void interpretar_END(t_instrucion* instruccion, char* query_id, int fd_master) {
+void interpretar_END(t_instrucion* instruccion) {
     /*
      * Formato: END
      * Esta instrucción da por finalizada la Query y le informa al módulo Master el fin de la misma.
@@ -232,10 +232,10 @@ void interpretar_END(t_instrucion* instruccion, char* query_id, int fd_master) {
     agregar_a_paquete(paquete, &(instruccion->copi), sizeof(set_instrucciones)); 
     void* paquete_s = serializar_paquete(paquete);
     
-    enviar_paquete_a(paquete_s, espacio_paquete_serializado(paquete), fd_master, "Master", instruccion->identificador);
+    enviar_paquete_a(paquete_s, espacio_paquete_serializado(paquete), master_socket, "Master", instruccion->identificador);
     destruir_paquete(paquete);
     free(paquete_s);
     
-    resultado_t resultado = resultado_instruccion(fd_master, "Master", instruccion->identificador);
-    log_ejecucion(resultado, instruccion->identificador, query_id);
+    resultado_t resultado = resultado_instruccion(master_socket, "Master", instruccion->identificador);
+    log_ejecucion(resultado, instruccion->identificador);
 }

@@ -3,6 +3,7 @@
 
 #include <commons/string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <worker_globals.h>
 
 t_list* parsear_archivo(char* path_archivo_query);
