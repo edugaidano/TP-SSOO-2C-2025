@@ -1,4 +1,4 @@
-#include <algoritmos_reemplazo.h>
+#include "algoritmos_reemplazo.h"
 
 // Private Functions //
 void notificar_cambios (nodo_pagina* victima, char* identificador, void* p_marco, int fd_storage);
