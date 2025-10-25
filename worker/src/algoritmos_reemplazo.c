@@ -8,7 +8,7 @@ void mover_puntero_clock ();
 
 // Public Functions //
 // Si se ejecuta es porque todos los marcos estan opcupados por alguna pagina 
-int algoritmo_LRU(int fd_storage, char* identificador_nueva_pagina) {    
+int algoritmo_LRU(char* identificador_nueva_pagina) {    
     
     nodo_marco* victima = list_get(marco, 0);
     // Selecciona el marco que mas tiempo lleva sin usarse
@@ -21,7 +21,7 @@ int algoritmo_LRU(int fd_storage, char* identificador_nueva_pagina) {
 
     nodo_pagina* pagina_victima = victima->pagina;
     if (pagina_victima->modificado) {
-        notificar_cambios(pagina_victima, victima->identificador, victima->puntero_marco, fd_storage);
+        notificar_cambios(pagina_victima, victima->identificador, victima->puntero_marco, storage_socket);
     }
 
     int nro_marco = actualizar_pagina(pagina_victima);
@@ -31,7 +31,7 @@ int algoritmo_LRU(int fd_storage, char* identificador_nueva_pagina) {
     return nro_marco;
 }
 
-int algoritmo_CLOCK_M(int fd_storage, char* identificador_nueva_pagina) {
+int algoritmo_CLOCK_M(char* identificador_nueva_pagina) {
     bool find = false;
     while (!find) {
         for (int i = 0; i < cantidad_marcos; i++) {
@@ -56,7 +56,7 @@ int algoritmo_CLOCK_M(int fd_storage, char* identificador_nueva_pagina) {
     
     nodo_pagina* pagina_victima = victima_clock->pagina;
     if (pagina_victima->modificado) {
-        notificar_cambios(pagina_victima, victima_clock->identificador, victima_clock->puntero_marco, fd_storage);
+        notificar_cambios(pagina_victima, victima_clock->identificador, victima_clock->puntero_marco, storage_socket);
     }
 
     int nro_marco = actualizar_pagina(pagina_victima);

@@ -6,7 +6,6 @@ void log_ejecucion(resultado_t resultado, char* instruccion);
 void enviar_paquete_a(paquete_t* paquete, int fd, char* modulo, char* instruccion);
 void instruccion_simple_storage(t_instrucion* instruccion);
 paquete_t* paquete_instruccion_storage(t_instrucion* instruccion);
-void agregar_file_tag(paquete_t* paquete, char* ft);
 
 // Public Functions //
 
@@ -108,11 +107,8 @@ void interpretar_WRITE(t_instrucion* instruccion) {
 
     double nro_pagina = ceil(base / tam_pagina);
     nodo_pagina* pagina = pagina_en_Tabla(identificador, nro_pagina);
-    if (pagina == NULL) {
-        pagina = solicitar_pagina(identificador, nro_pagina, storage_socket, query_id);
-    }
     
-    escribir_pagina(pagina, identificador, base, contenido, storage_socket, query_id);
+    escribir_pagina(pagina, identificador, base, contenido);
     log_ejecucion(OK, instruccion->identificador);
 }
 
@@ -124,11 +120,8 @@ void interpretar_READ(t_instrucion* instruccion) {
 
     double nro_pagina = ceil(base / tam_pagina);
     nodo_pagina* pagina = pagina_en_Tabla(identificador, nro_pagina);
-    if (pagina == NULL) {
-        pagina = solicitar_pagina(identificador, nro_pagina, storage_socket, query_id);
-    }
 
-    leer_pagina(pagina, identificador, base, size, storage_socket, master_socket, query_id);
+    leer_pagina(pagina, identificador, base, size);
     log_ejecucion(OK, instruccion->identificador);
 }
 
@@ -177,7 +170,6 @@ void enviar_paquete_a(paquete_t* paquete, int fd, char* modulo, char* instruccio
 
 void instruccion_simple_storage(t_instrucion* instruccion) {
     paquete_t* paquete = paquete_instruccion_storage(instruccion);
-
     enviar_paquete_a(paquete, storage_socket, "Storage", instruccion->identificador);
 }
 
@@ -186,11 +178,4 @@ paquete_t* paquete_instruccion_storage(t_instrucion* instruccion) {
     agregar_a_paquete(paquete, &(instruccion->copi), sizeof(set_instrucciones));     // COPI
     agregar_file_tag(paquete, instruccion->datos[0]);
     return paquete;
-}
-
-void agregar_file_tag(paquete_t* paquete, char* ft) {
-    char **datos = string_split(ft, ":");
-    agregar_a_paquete(paquete, datos[0], string_length(datos[0]) + 1);               // NOMBRE_FILE
-    agregar_a_paquete(paquete, datos[0], string_length(datos[1]) + 1);               // TAG
-    string_array_destroy(datos);
 }

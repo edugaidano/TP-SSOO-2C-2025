@@ -23,6 +23,6 @@ t_list *file_tag_pages;
 int tam_pagina;
 int cantidad_marcos;
 
-int (*algoritmo_reemplazo)(int, char*);
+int (*algoritmo_reemplazo)(char*);
 t_temporal *cronometro;
 nodo_marco *victima_clock;
