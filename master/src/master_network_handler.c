@@ -157,6 +157,7 @@ void *worker_handler(void *arg)
                 return NULL;
             }
             liberar_worker(worker);
+            sem_post(&sem_workers);
             break;
         }
         case DESCONEXION:
