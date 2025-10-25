@@ -55,7 +55,11 @@ void agregar_a_paquete(paquete_t *paquete, void *valor, int size)
 
 int espacio_paquete_serializado(paquete_t *paquete)
 {
-    return sizeof(op_code) + sizeof(int) + paquete->buffer->size + sizeof(int);
+    int espacio_total = sizeof(op_code) + sizeof(int) + paquete->buffer->size;
+    if (paquete->buffer->size != 0) {
+        espacio_total += sizeof(int);
+    }
+    return espacio_total;
 }
 
 // debe liberarse
@@ -67,11 +71,12 @@ void *serializar_paquete(paquete_t *paquete)
     int desplazamiento = sizeof(op_code);
     memcpy(stream + desplazamiento, &(paquete->buffer->size), sizeof(int));
     desplazamiento += sizeof(int);
-    memcpy(stream + desplazamiento, paquete->buffer->stream, paquete->buffer->size);
-    desplazamiento += paquete->buffer->size;
-
-    int final = 0;
-    memcpy(stream + desplazamiento, &final, sizeof(int));
+    if (paquete->buffer->size != 0) {
+        memcpy(stream + desplazamiento, paquete->buffer->stream, paquete->buffer->size);
+        desplazamiento += paquete->buffer->size;
+        int final = 0;
+        memcpy(stream + desplazamiento, &final, sizeof(int));
+    }
 
     return stream;
 }

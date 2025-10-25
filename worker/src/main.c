@@ -102,7 +102,6 @@ int main(int argc, char *argv[])
 
             // Manejo de interrupciones
             paquete_t* paquete_interrupcion = crear_paquete(CONSULTA_INTERRUPCION);
-            agregar_a_paquete(paquete_interrupcion, "A", string_length("A") + 1); //TODO: revisar por que no funciona sin esto
             enviar_paquete(master_socket, paquete_interrupcion, logger_worker);
             bool resultado; 
             // True: es necesario interrumpir la ejecucion 

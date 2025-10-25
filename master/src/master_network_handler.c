@@ -172,6 +172,7 @@ void *worker_handler(void *arg)
             }
             break;
         default:
+            log_error(logger_master, "Se recibio un paquete desconocido o no definido correctamente de parte del woeker %s", worker->id);
             break;
         }
 
