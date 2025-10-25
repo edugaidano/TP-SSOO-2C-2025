@@ -2,8 +2,10 @@
 
 // Private Functions //
 
+int marco_libre();
 void interaccion_con_memoria(void* dest, void* src, int size, nodo_marco* n_marco);
 file_tag* agregar_file_tag_en_memoria(char* identificador);
+nodo_pagina* solicitar_pagina(char* identificador, int nro_pagina);
 
 // Public Functions //
 
@@ -35,15 +37,6 @@ void init_memoria() {
     }
     
     log_info(logger_worker, "Memoria iniciada");
-}
-
-int marco_libre() {
-    for (int i = 0; i < cantidad_marcos; i++) {
-        if (!bit_map_marco[i]) {
-            return i;
-        }
-    }
-    return -1;
 }
 
 file_tag* file_tag_en_memoria(char*identificador) {
@@ -86,46 +79,6 @@ nodo_pagina* pagina_en_Tabla(char* identificador, int nro_pagina) {
     }
     
     return solicitar_pagina(identificador, nro_pagina);
-}
-
-nodo_pagina* solicitar_pagina(char* identificador, int nro_pagina) {
-    char **datos = string_split(identificador, ":");
-    log_info(logger_worker, "Query %s: - Memoria Miss - File: %s - Tag: %s - Pagina: %d", query_id, datos[0], datos[1], nro_pagina);
-
-    file_tag* ft = file_tag_en_memoria(identificador);
-
-    paquete_t* paquete = crear_paquete(SOLICITUD_STORAGE);
-    agregar_file_tag(paquete, identificador);
-    agregar_a_paquete(paquete, &nro_pagina, sizeof(int));                           // Nro_Pagina
-    enviar_paquete(storage_socket, paquete, logger_worker);
-
-    paquete = recibir_paquete(storage_socket, logger_worker); // Paquete: Informacion de la Pagina
-    if (paquete->codigo_operacion != PAGINA_WORKER) {
-        log_error(logger_worker, "Se recibio un paquete desconcocido al solicitar pagina");
-        exit(EXIT_FAILURE);
-    }
-    buffer_t* buffer = obtener_siguiente_item(paquete);
-
-    int indice = marco_libre();
-    if (indice == -1) {
-        indice = algoritmo_reemplazo(identificador);
-    }
-    log_info(logger_worker, "Query %s: Se asigna el Marco: %i a la Página: %i perteneciente al - File: %s - Tag: %s", query_id, indice, nro_pagina, datos[0], datos[1]);
-    bit_map_marco[indice] = true;
-    nodo_pagina* pagina = list_get(ft->tabla_paginas, nro_pagina);
-    pagina->nro_marco = indice;
-    pagina->presencia = true;
-    nodo_marco* n_marco = list_get(marco, indice);
-    memcpy(n_marco->puntero_marco, buffer->stream, buffer->size);
-    n_marco->identificador = ft->identificador;
-    n_marco->pagina = pagina;
-    free_buffer(buffer);
-    destruir_paquete(paquete);
-    
-    ft->cantidad_paginas++; 
-    log_info(logger_worker, "Query %s: - Memoria Add - File: %s - Tag: %s - Pagina: %d", query_id, datos[0], datos[1], nro_pagina);
-    string_array_destroy(datos);
-    return pagina;
 }
 
 void escribir_pagina(nodo_pagina* pagina, char* identificador, int direccion_base, char* datos) {
@@ -223,6 +176,15 @@ void leer_pagina(nodo_pagina* pagina, char*identificador, int direccion, int siz
 
 // Private Functions //
 
+int marco_libre() {
+    for (int i = 0; i < cantidad_marcos; i++) {
+        if (!bit_map_marco[i]) {
+            return i;
+        }
+    }
+    return -1;
+}
+
 void interaccion_con_memoria(void* dest, void* src, int size, nodo_marco* n_marco) {
     sleep(RETARDO_MEMORIA/1000);
     memcpy(dest, src, size);
@@ -233,7 +195,6 @@ void interaccion_con_memoria(void* dest, void* src, int size, nodo_marco* n_marc
 
 file_tag* agregar_file_tag_en_memoria(char* identificador) {
     paquete_t* paquete = crear_paquete(INFO_FILE_TAG_STORAGE);
-    log_error(logger_worker,  "%s", identificador);
     agregar_file_tag(paquete, identificador);
     enviar_paquete(storage_socket, paquete, logger_worker);
     
@@ -265,4 +226,44 @@ file_tag* agregar_file_tag_en_memoria(char* identificador) {
     free_buffer(buffer);
     destruir_paquete(paquete);
     return ft;
+}
+
+nodo_pagina* solicitar_pagina(char* identificador, int nro_pagina) {
+    char **datos = string_split(identificador, ":");
+    log_info(logger_worker, "Query %s: - Memoria Miss - File: %s - Tag: %s - Pagina: %d", query_id, datos[0], datos[1], nro_pagina);
+
+    file_tag* ft = file_tag_en_memoria(identificador);
+
+    paquete_t* paquete = crear_paquete(SOLICITUD_STORAGE);
+    agregar_file_tag(paquete, identificador);
+    agregar_a_paquete(paquete, &nro_pagina, sizeof(int));                           // Nro_Pagina
+    enviar_paquete(storage_socket, paquete, logger_worker);
+
+    paquete = recibir_paquete(storage_socket, logger_worker); // Paquete: Informacion de la Pagina
+    if (paquete->codigo_operacion != PAGINA_WORKER) {
+        log_error(logger_worker, "Se recibio un paquete desconcocido al solicitar pagina");
+        exit(EXIT_FAILURE);
+    }
+    buffer_t* buffer = obtener_siguiente_item(paquete);
+
+    int indice = marco_libre();
+    if (indice == -1) {
+        indice = algoritmo_reemplazo(identificador);
+    }
+    log_info(logger_worker, "Query %s: Se asigna el Marco: %i a la Página: %i perteneciente al - File: %s - Tag: %s", query_id, indice, nro_pagina, datos[0], datos[1]);
+    bit_map_marco[indice] = true;
+    nodo_pagina* pagina = list_get(ft->tabla_paginas, nro_pagina);
+    pagina->nro_marco = indice;
+    pagina->presencia = true;
+    nodo_marco* n_marco = list_get(marco, indice);
+    memcpy(n_marco->puntero_marco, buffer->stream, buffer->size);
+    n_marco->identificador = ft->identificador;
+    n_marco->pagina = pagina;
+    free_buffer(buffer);
+    destruir_paquete(paquete);
+    
+    ft->cantidad_paginas++; 
+    log_info(logger_worker, "Query %s: - Memoria Add - File: %s - Tag: %s - Pagina: %d", query_id, datos[0], datos[1], nro_pagina);
+    string_array_destroy(datos);
+    return pagina;
 }
