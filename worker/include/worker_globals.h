@@ -69,7 +69,7 @@ extern int cantidad_marcos;
 
 // Algoritmos //
 
-extern int (*algoritmo_reemplazo)(char*);
+extern int (*algoritmo_reemplazo)(char*, int);
 extern t_temporal *cronometro;      // Para LRU
 extern nodo_marco *victima_clock;   // Para CLOCK_M
 

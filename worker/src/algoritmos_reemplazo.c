@@ -1,14 +1,16 @@
 #include "algoritmos_reemplazo.h"
 
 // Private Functions //
-void notificar_cambios (nodo_pagina* victima, char* identificador, void* p_marco, int fd_storage);
+
+int actualizar_pagina (nodo_pagina* pagina, char* identificador);
 void check_file_tag (char* id_actual, char* id_nuevo);
-int actualizar_pagina (nodo_pagina* pagina);
+void log_reemplazo (char* identificador1,  char* identificador2, int nro_pagina1, int nro_pagina2);
 void mover_puntero_clock ();
+void notificar_cambios (nodo_pagina* victima, char* identificador, void* p_marco, int fd_storage);
 
 // Public Functions //
-// Si se ejecuta es porque todos los marcos estan opcupados por alguna pagina 
-int algoritmo_LRU(char* identificador_nueva_pagina) {    
+
+int algoritmo_LRU(char* id_nueva_pagina, int nro_nueva_pagina) {    
     
     nodo_marco* victima = list_get(marco, 0);
     // Selecciona el marco que mas tiempo lleva sin usarse
@@ -24,14 +26,16 @@ int algoritmo_LRU(char* identificador_nueva_pagina) {
         notificar_cambios(pagina_victima, victima->identificador, victima->puntero_marco, storage_socket);
     }
 
-    int nro_marco = actualizar_pagina(pagina_victima);
+    int nro_marco = actualizar_pagina(pagina_victima, victima->identificador);
 
-    check_file_tag(victima->identificador, identificador_nueva_pagina);
+    log_reemplazo(victima->identificador, id_nueva_pagina, pagina_victima->nro_pagina, nro_nueva_pagina);
+
+    check_file_tag(victima->identificador, id_nueva_pagina);
 
     return nro_marco;
 }
 
-int algoritmo_CLOCK_M(char* identificador_nueva_pagina) {
+int algoritmo_CLOCK_M(char* id_nueva_pagina, int nro_nueva_pagina) {
     bool find = false;
     while (!find) {
         for (int i = 0; i < cantidad_marcos; i++) {
@@ -59,10 +63,12 @@ int algoritmo_CLOCK_M(char* identificador_nueva_pagina) {
         notificar_cambios(pagina_victima, victima_clock->identificador, victima_clock->puntero_marco, storage_socket);
     }
 
-    int nro_marco = actualizar_pagina(pagina_victima);
+    int nro_marco = actualizar_pagina(pagina_victima, victima_clock->identificador);
     pagina_victima->uso = false;
 
-    check_file_tag(victima_clock->identificador, identificador_nueva_pagina);
+    log_reemplazo(victima_clock->identificador, id_nueva_pagina, pagina_victima->nro_pagina, nro_nueva_pagina);
+    
+    check_file_tag(victima_clock->identificador, id_nueva_pagina);
 
     mover_puntero_clock();
 
@@ -75,8 +81,7 @@ void notificar_cambios(nodo_pagina* victima, char* identificador, void* p_marco,
     char **datos = string_split(identificador, ":");
 
     paquete_t* paquete = crear_paquete(MODIFICACIONES_STORAGE);
-    agregar_a_paquete(paquete, datos[0], string_length(datos[0]) + 1);  // FILE
-    agregar_a_paquete(paquete, datos[1], string_length(datos[1]) + 1);  // TAG
+    agregar_file_tag(paquete, identificador);
     agregar_a_paquete(paquete, &victima->nro_pagina, sizeof(int));      // Nro Pagina
     string_array_destroy(datos);
     agregar_a_paquete(paquete, p_marco, tam_pagina);                    // Contenido
@@ -102,12 +107,14 @@ void check_file_tag (char* id_actual, char* id_nuevo) {
     }
 }
 
-int actualizar_pagina (nodo_pagina* pagina) {
+int actualizar_pagina (nodo_pagina* pagina, char* ft) {
     int nro_marco = pagina->nro_marco;
     bit_map_marco[nro_marco] = false;
     pagina->presencia = false;
     pagina->modificado = false;
-    //log_info(logger_worker, "Query %s: Se libera el Marco: %d perteneciente al - File: %s - Tag: %s", query_id, pagina->nro_marco, datos[0], datos[1]);
+    char **datos = string_split(ft, ":");
+    log_info(logger_worker, "Query %s: Se libera el Marco: %d perteneciente al - File: %s - Tag: %s", query_id, nro_marco, datos[0], datos[1]);
+    string_array_destroy(datos);
     return nro_marco;
 }
 
@@ -118,4 +125,9 @@ void mover_puntero_clock () {
     } else {
         victima_clock = list_get(marco, nro_marco_siguiente);
     }
+}
+
+void log_reemplazo (char* identificador1,  char* identificador2, int nro_pagina1, int nro_pagina2) {
+    log_info(logger_worker, "## Query %s: Se reemplaza la página %s/%d por la %s/%d"
+        , query_id, identificador1, nro_pagina1, identificador2, nro_pagina2);
 }

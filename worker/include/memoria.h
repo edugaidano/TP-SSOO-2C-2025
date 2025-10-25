@@ -1,8 +1,8 @@
 #ifndef MEMORIA_H
 #define MEMORIA_H
 
-#include "algoritmos_reemplazo.h"
 #include "worker_globals.h"
+#include "utils/paquetes.h"
 #include <math.h>
 #include <unistd.h>
 

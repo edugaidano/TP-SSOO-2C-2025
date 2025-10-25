@@ -31,17 +31,25 @@ void interpretar_DELETE(t_instrucion* instruccion) {
 
     for (int index_ft = 0; index_ft < list_size(file_tag_pages); index_ft++) {
         file_tag* ft = list_get(file_tag_pages, index_ft);
+
         if (string_equals_ignore_case(ft->identificador, instruccion->datos[0])) {
             // Libera los marcos que esta usando el FILE:TAG
+            char **datos = string_split(instruccion->datos[0], ":");
+
             for (int i = 0; i < list_size(ft->tabla_paginas); i++) {
-                if (ft->cantidad_paginas != 0) { break; }
+
+                if (ft->cantidad_paginas == 0) { break; }
+
                 nodo_pagina* pagina = list_get(ft->tabla_paginas, i);
+
                 if (pagina->presencia) {
                     bit_map_marco[pagina->nro_marco] = false;
                     pagina->presencia = false;
                     ft->cantidad_paginas--;
+                    log_info(logger_worker, "Query %s: Se libera el Marco: %d perteneciente al - File: %s - Tag: %s", query_id, pagina->nro_marco, datos[0], datos[1]);
                 }
             }
+            string_array_destroy(datos);
             // Elimina el FILE:TAG de la memoria interna
             list_remove(file_tag_pages, index_ft);
             free_file_tag(ft);

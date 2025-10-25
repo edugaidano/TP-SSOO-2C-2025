@@ -5,13 +5,13 @@
 #include <utils/op_codes.h>
 #include <commons/collections/list.h>
 
-typedef struct
+typedef struct buffer_t
 {
     int size;
     void *stream;
 } buffer_t;
 
-typedef struct
+typedef struct paquete_t
 {
     op_code codigo_operacion;
     buffer_t *buffer;

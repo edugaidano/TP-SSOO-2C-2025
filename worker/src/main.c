@@ -109,7 +109,7 @@ int main(int argc, char *argv[])
             // False: se continua con normalidad
             recv(master_socket, &resultado, sizeof(bool), MSG_WAITALL);
             if (resultado)  {
-                log_info(logger_worker, "Se recibio una interrupcion de la query por parte del Master");
+                log_info(logger_worker, "## Query %s: Desalojada por pedido del Master", query_id);
                 // sale del while y espera un nuevo query (Aqui se puede agregar un paquete si es necesario para el master)
                 break;
             }
