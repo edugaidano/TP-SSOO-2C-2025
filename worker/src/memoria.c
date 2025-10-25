@@ -15,7 +15,6 @@ void init_memoria() {
 
     // Lista de marcos
     cantidad_marcos = TAM_MEMORIA/tam_pagina;
-    marco = list_create();
     for (int i = 0; i < cantidad_marcos; i++) {
         nodo_marco* n_marco = malloc(sizeof(nodo_marco));
         n_marco->puntero_marco = (char*)memoria + i * tam_pagina;
@@ -27,9 +26,6 @@ void init_memoria() {
     for (int i = 0; i < cantidad_marcos; i++) {
         bit_map_marco[i] = false;
     }
-
-    // Lista de paginas x File:TAG
-    file_tag_pages = list_create();
 
     if (string_equals_ignore_case(ALGORITMO_REEMPLAZO, "CLOCK-M")) {
         nodo_marco* n_marco = list_get(marco, 0);

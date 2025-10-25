@@ -160,6 +160,7 @@ void *worker_handler(void *arg)
             break;
         }
         case DESCONEXION:
+        {
             if (worker->state == EXEC)
             {
                 finalizar_query(query, ERR_DESC_WORKER);
@@ -170,7 +171,9 @@ void *worker_handler(void *arg)
                 log_info(logger_master, "## Se desconecta el Worker <%s> - No habia una query en ejecucion - Cantidad total de Workers: <%d> ", worker->id, list_size(workers) - 1);
                 destruir_worker(worker);
             }
-            break;
+            list_destroy_and_destroy_elements(package, free);
+            return NULL;
+        }
         default:
             log_error(logger_master, "Se recibio un paquete desconocido o no definido correctamente de parte del woeker %s", worker->id);
             break;

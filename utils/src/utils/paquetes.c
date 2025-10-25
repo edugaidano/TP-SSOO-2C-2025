@@ -85,13 +85,11 @@ void *serializar_paquete(paquete_t *paquete)
 paquete_t *recibir_paquete(int socket_cliente, t_log *logger)
 {
     op_code codigo_operacion;
-    int res = recv(socket_cliente, &codigo_operacion, sizeof(op_code), MSG_WAITALL);
     paquete_t *paquete;
-
-    if (res <= 0)
+    if (recv(socket_cliente, &codigo_operacion, sizeof(op_code), MSG_WAITALL) <= 0)
     {
-        paquete = crear_paquete(DESCONEXION);
-        return paquete;
+        log_error(logger, "Error en recv (fd %d)", socket_cliente);
+        exit(EXIT_FAILURE);
     }
     paquete = crear_paquete(codigo_operacion);
 

@@ -2,44 +2,62 @@
 
 void recibir_mensaje(int socket)
 {
-    t_list *list = recv_package(socket, logger_query_control);
-    op_code opcode = get_opcode(list);
+    while (true) 
+    { 
+        t_list *package = recv_package(socket, logger_query_control);
+        op_code opcode = get_opcode(package);
 
-    switch (opcode)
-    {
-    case NOTIF_QUERY_CONTROL:
-        notif_query_control notif = get_opcode(list);
+        // Casos particulares
+        if (opcode != NOTIF_QUERY_CONTROL && opcode != DESCONEXION)
+        {
+            log_error(logger_query_control, "Se recibio un paquete desconocido");
+            exit(EXIT_FAILURE);
+        }
+        
+        if (opcode == DESCONEXION)
+        {
+            log_error(logger_query_control, "El master se desconecto");
+            exit(EXIT_FAILURE);
+        }
+        
+        // Manejo de notificaciones del Master
+        notif_query_control notif = *(notif_query_control*) list_get(package, 0);
         switch (notif)
         {
         case NOTIF_FINAL:
-            razon_fin razon = get_opcode(list);
+        {
+            razon_fin razon = *(razon_fin*) list_get(package, 1);
             switch (razon)
             {
-            case FINALIZACION_CORRECTA:
+                case FINALIZACION_CORRECTA:
                 log_info(logger_query_control, "## Query finalizada - <La ejecución finalizó correctamente>");
                 break;
             case ERR_DESC_WORKER:
                 log_info(logger_query_control, "## Query finalizada - <La ejecución finalizó por desconexión del worker>");
                 break;
             default:
+                log_info(logger_query_control, "Query finalizada - motivo desconocido o no definido correctamente");
                 break;
             }
-            break;
+            list_destroy_and_destroy_elements(package, free);
+            return;
+        }
         case NOTIF_READ:
-            char *file = (char *)list_get(list, 0);
-            char *tag = (char *)list_get(list, 1);
-            char *contenido = (char *)list_get(list, 2);
+        {
+            char *file = (char *)list_get(package, 1);
+            char *tag = (char *)list_get(package, 2);
+            char *contenido = (char *)list_get(package, 3);
             log_info(logger_query_control, "## Lectura realizada: Archivo <%s:%s>, contenido: <%s>", file, tag, contenido);
-            recibir_mensaje(socket);
-            break;
-        default:
             break;
         }
-        break;
-    default:
-        break;
+        default:
+            log_error(logger_query_control, "Se recibio una notificacion desconocida");
+            exit(EXIT_FAILURE);
+            break;
+        }
+        
+        list_destroy_and_destroy_elements(package, free);
     }
-    list_destroy_and_destroy_elements(list, free);
 }
 
 int main(int argc, char *argv[])
@@ -66,5 +84,8 @@ int main(int argc, char *argv[])
     log_info(logger_query_control, "## handshake con master realizado");
 
     recibir_mensaje(socket_master);
+    //TODO: liberar recursos y atexit()
+    paquete_t *paquete_desconexion = crear_paquete(DESCONEXION);
+    enviar_paquete(socket_master, paquete_desconexion, logger_query_control);
     return 0;
 }

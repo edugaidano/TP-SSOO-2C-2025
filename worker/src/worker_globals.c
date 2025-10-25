@@ -13,8 +13,8 @@ int TAM_MEMORIA;
 int RETARDO_MEMORIA;
 
 char *query_id;
-int master_socket;
-int storage_socket;
+int master_socket = -1;
+int storage_socket = -1;
 
 void *memoria;
 bool *bit_map_marco;

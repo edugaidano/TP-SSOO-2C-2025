@@ -10,7 +10,12 @@ int main(int argc, char *argv[])
 
     // Iniciar Logs y Configs
     init(argv[1]);
+    marco = list_create();
+    file_tag_pages = list_create();
     char ack[4];
+
+    atexit(notificar_y_liberar);
+    signal(SIGINT, exit);
 
     // Handshake con Storage
     storage_socket = connect_to_server(IP_STORAGE, PUERTO_STORAGE, logger_worker);
@@ -119,19 +124,6 @@ int main(int argc, char *argv[])
         free(query_id);
         list_destroy_and_destroy_elements(instrucciones, destruir_instruccion);
     }
-
-    // Liberacion de Recursos
-    if (string_equals_ignore_case(ALGORITMO_REEMPLAZO, "LRU")) {
-        temporal_destroy(cronometro);
-    }
-    config_destroy(config_worker);
-    log_destroy(logger_worker);
-    list_destroy_and_destroy_elements(file_tag_pages, free_file_tag);
-    list_destroy_and_destroy_elements(marco, free);
-    free(memoria);
-    free(bit_map_marco);
-    close(master_socket);
-    close(storage_socket);
 
     return 0;
 }

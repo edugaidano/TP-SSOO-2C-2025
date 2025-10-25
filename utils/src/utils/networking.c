@@ -97,7 +97,7 @@ int connect_to_server(char *IP, char *PORT, t_log *log)
     if ((return_value = getaddrinfo(IP, PORT, &hints, &server_info)) != 0)
     {
         log_error(log, "getaddrinfo %s", gai_strerror(return_value));
-        exit(-1);
+        exit(EXIT_FAILURE);
     }
 
     for (pointer = server_info; pointer != NULL; pointer = pointer->ai_next)
@@ -122,6 +122,7 @@ int connect_to_server(char *IP, char *PORT, t_log *log)
     {
         log_error(log, "client: no se pudo conectar el cliente");
         freeaddrinfo(server_info);
+        exit(EXIT_FAILURE);
         return -1;
     }
 

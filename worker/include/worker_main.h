@@ -4,6 +4,7 @@
 #include "worker_init.h"
 #include "parser.h"
 #include "interpreter.h"
+#include "liberar_recursos.h"
 #include "utils/networking.h"
 #include <commons/collections/list.h>
 
