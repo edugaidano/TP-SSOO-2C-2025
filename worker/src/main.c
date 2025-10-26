@@ -37,14 +37,16 @@ int main(int argc, char *argv[])
 
     // Iniciar memoria interna
     init_memoria();
-    t_list *instrucciones;
 
     while (true) {
+        query_id = NULL;
+        instrucciones = NULL;
         // Espera de Query (Paqute: nombre del archivo, query ID, PC)
         log_info(logger_worker, "Esperando una query ...");
         paquete_t *paquete_query = recibir_paquete(master_socket, logger_worker);
         if (paquete_query->codigo_operacion != SOLICITUD_EJECUCION) {
             log_error(logger_worker, "Se recibio un paquete con un op_code distinto a %d", SOLICITUD_EJECUCION);
+            destruir_paquete(paquete_query);
             exit(EXIT_FAILURE);
         }
 

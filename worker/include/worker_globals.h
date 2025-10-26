@@ -55,6 +55,7 @@ extern int RETARDO_MEMORIA;
 // Utils //
 
 extern char *query_id;
+extern t_list *instrucciones;
 extern int master_socket;
 extern int storage_socket;
 

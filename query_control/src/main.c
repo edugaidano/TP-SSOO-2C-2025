@@ -40,7 +40,6 @@ void recibir_mensaje(int socket)
                 break;
             }
             list_destroy_and_destroy_elements(package, free);
-            close(socket); // TODO: agrgar a liberar recursos
             return;
         }
 
@@ -89,5 +88,6 @@ int main(int argc, char *argv[])
     //TODO: liberar recursos y atexit()
     paquete_t *paquete_desconexion = crear_paquete(DESCONEXION);
     enviar_paquete(socket_master, paquete_desconexion, logger_query_control);
+    close(socket); // TODO: agrgar a liberar recursos
     return 0;
 }

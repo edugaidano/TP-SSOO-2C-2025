@@ -26,8 +26,9 @@ t_list* parsear_archivo(char* path_archivo_query) {
     char** lineas = string_split(contenido, "\n");
     while (!string_array_is_empty(lineas)) {
         char* linea = string_array_pop(lineas);
-        t_instrucion* instruccion = malloc(sizeof(instruccion));
+        t_instrucion* instruccion = malloc(sizeof(t_instrucion));
         char** tokens = string_split(linea, " ");
+        free(linea);
         instruccion->identificador = string_duplicate(tokens[0]);
         instruccion->datos = string_array_new();
 
@@ -36,6 +37,11 @@ t_list* parsear_archivo(char* path_archivo_query) {
             i++;
             if (i > END) {
                 log_error(logger_worker, "No existe la instruccion %s", instruccion->identificador);
+                list_destroy_and_destroy_elements(instrucciones, destruir_instruccion);
+                destruir_instruccion(instruccion);
+                string_array_destroy(tokens);
+                string_array_destroy(lineas);
+                free(contenido);
                 exit(EXIT_FAILURE);
             }
         }        

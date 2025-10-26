@@ -151,6 +151,7 @@ void log_ejecucion(resultado_t resultado, char* instruccion) {
         case ERROR:
             log_error(logger_worker, "Error al ejecutar instruccion %s", instruccion);
             exit(EXIT_FAILURE);
+            break;
         default:
             log_error(logger_worker, "No se resonoce el resultado al ejecutar instruccion %s", instruccion);
             exit(EXIT_FAILURE);
@@ -162,6 +163,8 @@ void enviar_paquete_a(paquete_t* paquete, int fd, char* modulo, char* instruccio
     void* paquete_s = serializar_paquete(paquete);
     if (send(fd, paquete_s, espacio_paquete_serializado(paquete), 0) <= 0) {
         log_error(logger_worker, "Error o desconeccion en %s al enviar instruccion %s", modulo, instruccion);
+        destruir_paquete(paquete);
+        free(paquete_s);
         exit(EXIT_FAILURE);
     }
     destruir_paquete(paquete);

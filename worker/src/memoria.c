@@ -166,11 +166,13 @@ void leer_pagina(nodo_pagina* pagina, char*identificador, int direccion, int siz
     resultado_t result;
     if (recv(master_socket, &result, sizeof(resultado_t), 0) <= 0) {
         log_error(logger_worker, "Error o desconeccion en Master al recibir un resultado de la lectura");
+        free(lectura);
         exit(EXIT_FAILURE);
     }
     
     if (result == ERROR) {
         log_error(logger_worker, "Error al realizar la lectura en el master");
+        free(lectura);
         exit(EXIT_FAILURE);
     }
 
@@ -205,6 +207,7 @@ file_tag* agregar_file_tag_en_memoria(char* identificador) {
     paquete = recibir_paquete(storage_socket, logger_worker); // Paquete: Tamaño del FILE:TAG
     if (paquete->codigo_operacion != INFO_FILE_TAG_WORKER) {
         log_error(logger_worker, "Se recibio un paquete desconcocido al solicitar informacion sobre %s", identificador);
+        destruir_paquete(paquete);
         exit(EXIT_FAILURE);
     }
     
@@ -246,6 +249,7 @@ nodo_pagina* solicitar_pagina(char* identificador, int nro_pagina) {
     paquete = recibir_paquete(storage_socket, logger_worker); // Paquete: Informacion de la Pagina
     if (paquete->codigo_operacion != PAGINA_WORKER) {
         log_error(logger_worker, "Se recibio un paquete desconcocido al solicitar pagina");
+        destruir_paquete(paquete);
         exit(EXIT_FAILURE);
     }
     buffer_t* buffer = obtener_siguiente_item(paquete);

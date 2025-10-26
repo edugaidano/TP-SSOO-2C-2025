@@ -81,12 +81,10 @@ int algoritmo_CLOCK_M(char* id_nueva_pagina, int nro_nueva_pagina) {
 // Private Functions //
 
 void notificar_cambios(nodo_pagina* victima, char* identificador, void* p_marco, int fd_storage) {
-    char **datos = string_split(identificador, ":");
 
     paquete_t* paquete = crear_paquete(MODIFICACIONES_STORAGE);
     agregar_file_tag(paquete, identificador);
     agregar_a_paquete(paquete, &victima->nro_pagina, sizeof(int));      // Nro Pagina
-    string_array_destroy(datos);
     agregar_a_paquete(paquete, p_marco, tam_pagina);                    // Contenido
     enviar_paquete(fd_storage, paquete, logger_worker);
 

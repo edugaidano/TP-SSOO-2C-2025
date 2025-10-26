@@ -13,6 +13,7 @@ int TAM_MEMORIA;
 int RETARDO_MEMORIA;
 
 char *query_id;
+t_list *instrucciones;
 int master_socket = -1;
 int storage_socket = -1;
 

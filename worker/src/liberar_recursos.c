@@ -38,6 +38,12 @@ void liberar_recursos() {
     config_destroy(config_worker);
     list_destroy_and_destroy_elements(file_tag_pages, free_file_tag);
     list_destroy_and_destroy_elements(marco, free);
+    if (query_id != NULL) {
+        free(query_id);
+    }    
+    if (instrucciones != NULL) {
+        list_destroy_and_destroy_elements(instrucciones, destruir_instruccion);
+    }    
     free(memoria);
     free(bit_map_marco);
     close(master_socket);
