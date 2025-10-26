@@ -48,7 +48,6 @@ file_tag* file_tag_en_memoria(char*identificador) {
             return ft;
         }
     }
-
     return agregar_file_tag_en_memoria(identificador);
 }
 
@@ -61,6 +60,15 @@ void agregar_file_tag(paquete_t* paquete, char* ft) {
 
 void free_file_tag(void* arg) {
     file_tag* ft = (file_tag*)arg;
+
+    for (int i = 0; i < list_size(file_tag_pages); i++) {
+        file_tag* aux = list_get(file_tag_pages, i);
+        if (string_equals_ignore_case(aux->identificador, ft->identificador)) {
+            list_remove(file_tag_pages, i);
+            break;
+        }
+    }
+
     list_destroy_and_destroy_elements(ft->tabla_paginas, free);
     free(ft->identificador);
     free(ft);

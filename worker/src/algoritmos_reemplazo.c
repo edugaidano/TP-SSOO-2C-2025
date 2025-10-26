@@ -5,7 +5,7 @@
 int actualizar_pagina (nodo_pagina* pagina, char* identificador);
 void check_file_tag (char* id_actual, char* id_nuevo);
 void log_reemplazo (char* identificador1,  char* identificador2, int nro_pagina1, int nro_pagina2);
-void mover_puntero_clock ();
+void mover_puntero_clock (int nro_marco);
 void notificar_cambios (nodo_pagina* victima, char* identificador, void* p_marco, int fd_storage);
 
 // Public Functions //
@@ -37,13 +37,15 @@ int algoritmo_LRU(char* id_nueva_pagina, int nro_nueva_pagina) {
 
 int algoritmo_CLOCK_M(char* id_nueva_pagina, int nro_nueva_pagina) {
     bool find = false;
+    int nro_marco_siguiente;
     while (!find) {
         for (int i = 0; i < cantidad_marcos; i++) {
             if (!victima_clock->pagina->uso && !victima_clock->pagina->modificado) {
                 find = true;
                 break;
             }
-            mover_puntero_clock();
+            nro_marco_siguiente = victima_clock->pagina->nro_marco + 1;
+            mover_puntero_clock(nro_marco_siguiente);
         }
 
         if (find) { break; }
@@ -54,7 +56,8 @@ int algoritmo_CLOCK_M(char* id_nueva_pagina, int nro_nueva_pagina) {
                 break;
             }
             victima_clock->pagina->uso = false;
-            mover_puntero_clock();
+            nro_marco_siguiente = victima_clock->pagina->nro_marco + 1;
+            mover_puntero_clock(nro_marco_siguiente);
         }
     }
     
@@ -70,7 +73,7 @@ int algoritmo_CLOCK_M(char* id_nueva_pagina, int nro_nueva_pagina) {
     
     check_file_tag(victima_clock->identificador, id_nueva_pagina);
 
-    mover_puntero_clock();
+    mover_puntero_clock(nro_marco + 1);
 
     return nro_marco;
 }
@@ -118,12 +121,11 @@ int actualizar_pagina (nodo_pagina* pagina, char* ft) {
     return nro_marco;
 }
 
-void mover_puntero_clock () {
-    int nro_marco_siguiente = victima_clock->pagina->nro_marco + 1;
-    if (nro_marco_siguiente == cantidad_marcos) {
+void mover_puntero_clock (int nro_marco) {
+    if (nro_marco == cantidad_marcos) {
         victima_clock = list_get(marco, 0);
     } else {
-        victima_clock = list_get(marco, nro_marco_siguiente);
+        victima_clock = list_get(marco, nro_marco);
     }
 }
 
