@@ -40,8 +40,10 @@ void recibir_mensaje(int socket)
                 break;
             }
             list_destroy_and_destroy_elements(package, free);
+            close(socket); // TODO: agrgar a liberar recursos
             return;
         }
+
         case NOTIF_READ:
         {
             char *file = (char *)list_get(package, 1);
