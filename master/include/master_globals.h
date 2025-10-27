@@ -48,6 +48,7 @@ struct query
     int socket;
     char *file;
     int prioridad;
+    bool interrumpir;
     worker_t *worker;
     pthread_mutex_t mutex;
     state_t state;

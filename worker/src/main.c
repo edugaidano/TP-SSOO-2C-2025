@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
 
         bool fin = false;
         // Lectura de instrucciones
-        while (list_size(instrucciones) > pc && !fin) {
+        while (list_size(instrucciones) > pc) {
             t_instrucion *instruccion = list_get(instrucciones, pc);
             log_info(logger_worker, "## Query %s: FETCH - Program Counter: %d - %s", query_id, pc, instruccion->identificador);
 
@@ -107,16 +107,21 @@ int main(int argc, char *argv[])
                 break;
             }
 
+            if (fin) { break; }
+            
             // Manejo de interrupciones
             paquete_t* paquete_interrupcion = crear_paquete(CONSULTA_INTERRUPCION);
+            agregar_a_paquete(paquete_interrupcion, &pc, sizeof(int));
             enviar_paquete(master_socket, paquete_interrupcion, logger_worker);
             bool resultado; 
             // True: es necesario interrumpir la ejecucion 
             // False: se continua con normalidad
-            recv(master_socket, &resultado, sizeof(bool), MSG_WAITALL);
+            if (recv(master_socket, &resultado, sizeof(bool), MSG_WAITALL) <= 0) {
+                log_error(logger_worker, "Error o desconeccion al recibir el resultado de la interrupcion");
+                exit(EXIT_FAILURE);
+            }
             if (resultado)  {
                 log_info(logger_worker, "## Query %s: Desalojada por pedido del Master", query_id);
-                // sale del while y espera un nuevo query (Aqui se puede agregar un paquete si es necesario para el master)
                 break;
             }
 

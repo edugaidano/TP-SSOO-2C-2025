@@ -25,6 +25,7 @@ void *master_network_handler(void *arg)
             query->socket = connection_socket;
             query->state = READY;
             query->worker = NULL;
+            query->interrumpir = false;
 
             list_add(querys_ready, query);
             send(connection_socket, "ACK", 4, 0);
@@ -89,7 +90,7 @@ void *query_handler(void *arg)
         break;
     case EXEC:
         log_info(logger_master, "la query: <%d> estaba en exec, desalojando cpu: %s", query->id, query->worker->id);
-        query->worker->interrumpir = true;
+        query->interrumpir = true;
         sem_wait(&(query->worker->sem_interrupt));
         liberar_worker(query->worker);
         log_info(logger_master, "la query fue eliminada, querys en exec: %d", list_size(querys_exec) - 1);
@@ -98,6 +99,7 @@ void *query_handler(void *arg)
     case FINISHED:
         log_info(logger_master, "la query <%d> notifica de su finalizacion, liberando recursos", query->id);
         destruir_query(query);
+        break;
     default:
         break;
     }
@@ -119,17 +121,29 @@ void *worker_handler(void *arg)
         {
         case CONSULTA_INTERRUPCION: 
         {
-            bool interrumpir = worker->interrumpir;
+            log_warning(logger_master, "W: %d", worker->interrumpir);
+            log_warning(logger_master, "Q: %d", worker->query->interrumpir);
+            bool result = worker->interrumpir || worker->query->interrumpir;
+            log_error(logger_master, "R: %d", result);
             
-            if (send(worker->socket, &interrumpir, sizeof(bool), 0) <= 0) 
+            if (send(worker->socket, &result, sizeof(bool), 0) <= 0) 
             {
                 log_error(logger_master, "Error al enviar interrupción al Worker <%s>", worker->id);
                 return NULL;
             }
             
-            if (interrumpir) {
+            if (worker->interrumpir) // Interrupcion del master (algoritmo de desalojo)
+            {
+                int new_pc = *(int*) list_get(package, 0);
+                worker->query->pc = new_pc;
+            }
+
+            if (worker->query->interrumpir) // Interrupcion por desconexion de query_control
+            {
                 sem_post(&(worker->sem_interrupt));
             }
+            
+
             break;
         }
         case LECTURA_MASTER: 
