@@ -92,7 +92,6 @@ void *query_handler(void *arg)
         log_info(logger_master, "la query: <%d> estaba en exec, desalojando cpu: %s", query->id, query->worker->id);
         query->interrumpir = true;
         sem_wait(&(query->worker->sem_interrupt));
-        liberar_worker(query->worker);
         log_info(logger_master, "la query fue eliminada, querys en exec: %d", list_size(querys_exec) - 1);
         destruir_query(query);
         break;
@@ -121,10 +120,7 @@ void *worker_handler(void *arg)
         {
         case CONSULTA_INTERRUPCION: 
         {
-            log_warning(logger_master, "W: %d", worker->interrumpir);
-            log_warning(logger_master, "Q: %d", worker->query->interrumpir);
             bool result = worker->interrumpir || worker->query->interrumpir;
-            log_error(logger_master, "R: %d", result);
             
             if (send(worker->socket, &result, sizeof(bool), 0) <= 0) 
             {
@@ -142,7 +138,12 @@ void *worker_handler(void *arg)
             {
                 sem_post(&(worker->sem_interrupt));
             }
-            
+
+            if (result)
+            {
+                liberar_worker(query->worker);
+                sem_post(&sem_workers);
+            }
 
             break;
         }
