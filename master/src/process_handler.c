@@ -2,14 +2,14 @@
 
 void *process_handler(void *arg)
 {
-    /*
+    
     if (string_equals_ignore_case(ALGORITMO_PLANIFICACION, "PRIORIDADES"))
     {
         pthread_t actualizador_de_prioridad;
         pthread_create(&actualizador_de_prioridad, NULL, &actualizador, NULL);
         pthread_detach(actualizador_de_prioridad);
     }
-
+    /*
     if (string_equals_ignore_case(ALGORITMO_PLANIFICACION, "PRIORIDADES"))
     {
         pthread_t hilo_desalojador;
@@ -84,23 +84,26 @@ void *esperar_respuesta(void *arg)
 
 void *actualizador()
 {
-    usleep(TIEMPO_AGING * 1000);
-    pthread_mutex_lock(&mutex_ready);
-
-    t_list_iterator *iterator = list_iterator_create(querys_ready);
-
-    while (list_iterator_has_next(iterator))
+    while (true)
     {
-        query_t *query = list_iterator_next(iterator);
-        if (query->prioridad > 0)
-        {
-            query->prioridad--;
-            log_info(logger_master, "##<%d> Cambio de prioridad: <%d> - <%d>", query->id, (query->prioridad + 1), query->prioridad);
-        }
-    }
+        sleep(TIEMPO_AGING / 1000); // Milisegundos -> Segundos
+        pthread_mutex_lock(&mutex_ready);
 
-    pthread_mutex_unlock(&mutex_ready);
-    list_iterator_destroy(iterator);
+        t_list_iterator *iterator = list_iterator_create(querys_ready);
+
+        while (list_iterator_has_next(iterator))
+        {
+            query_t *query = list_iterator_next(iterator);
+            if (query->prioridad > 0)
+            {
+                query->prioridad--;
+                log_info(logger_master, "##<%d> Cambio de prioridad: <%d> - <%d>", query->id, (query->prioridad + 1), query->prioridad);
+            }
+        }
+
+        pthread_mutex_unlock(&mutex_ready);
+        list_iterator_destroy(iterator);
+    }
     return 0;
 }
 
