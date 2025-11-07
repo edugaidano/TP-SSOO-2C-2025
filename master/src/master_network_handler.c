@@ -27,7 +27,19 @@ void *master_network_handler(void *arg)
             query->worker = NULL;
             query->interrumpir = false;
 
-            list_add(querys_ready, query);
+            if (string_equals_ignore_case(ALGORITMO_PLANIFICACION, "FIFO"))
+            {
+                list_add(querys_ready, query);
+            } 
+            else if (string_equals_ignore_case(ALGORITMO_PLANIFICACION, "PRIORIDADES"))
+            {
+                list_add_sorted(querys_ready, query, priority_comparator); //TODO: if(==0 && no woekers_libres) {desalojar worker}
+            } 
+            else
+            {
+                log_error(logger_master, "El algoritmo de planificacion no esta definido correctamente");
+                exit(EXIT_FAILURE);
+            }
             send(connection_socket, "ACK", 4, 0);
 
             sem_post(&sem_ready);

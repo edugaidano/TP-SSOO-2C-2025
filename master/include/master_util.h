@@ -18,5 +18,6 @@ void solicitar_ejecucion_query(query_t *query, int socket);
 query_t *buscar_victima();
 void solicitar_desalojo(query_t *victima);
 void destruir_worker(worker_t *worker);
+bool priority_comparator(void* a, void* b);
 
 #endif

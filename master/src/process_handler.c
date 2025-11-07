@@ -2,6 +2,7 @@
 
 void *process_handler(void *arg)
 {
+    /*
     if (string_equals_ignore_case(ALGORITMO_PLANIFICACION, "PRIORIDADES"))
     {
         pthread_t actualizador_de_prioridad;
@@ -14,7 +15,8 @@ void *process_handler(void *arg)
         pthread_t hilo_desalojador;
         pthread_create(&hilo_desalojador, NULL, &desalojador, NULL);
     }
-
+    */
+    
     while (1)
     {
         sem_wait(&sem_ready);

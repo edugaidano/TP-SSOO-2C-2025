@@ -28,6 +28,13 @@ void finalizar_query(query_t *query, razon_fin razon)
     notificar_finalizacion(query, razon);
 }
 
+bool priority_comparator(void* a, void* b)
+{
+    query_t *query_a = (query_t*) a;
+    query_t *query_b = (query_t*) b;
+    return query_a->prioridad < query_b->prioridad;
+}
+
 void liberar_query(query_t *query, int pc)
 {
     pthread_mutex_lock(&mutex_exec);
@@ -98,6 +105,7 @@ void liberar_worker(worker_t *worker)
     worker->interrumpir = false;
     pthread_mutex_unlock(&mutex_workers);
 }
+
 void destruir_worker(worker_t *worker)
 {
     pthread_mutex_lock(&mutex_workers);
@@ -109,6 +117,7 @@ void destruir_worker(worker_t *worker)
     free(worker->id);
     free(worker);
 }
+
 query_t *obtener_query()
 {
     if (strcmp(ALGORITMO_PLANIFICACION, "FIFO") == 0)
