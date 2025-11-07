@@ -120,13 +120,12 @@ void destruir_worker(worker_t *worker)
 
 query_t *obtener_query()
 {
-    if (strcmp(ALGORITMO_PLANIFICACION, "FIFO") == 0)
-    {
-        pthread_mutex_lock(&mutex_ready);
-        query_t *query = list_remove(querys_ready, 0);
-        pthread_mutex_unlock(&mutex_ready);
-        return query;
-    }
+    pthread_mutex_lock(&mutex_ready);
+    query_t *query = list_remove(querys_ready, 0);
+    pthread_mutex_unlock(&mutex_ready);
+    return query;
+    
+    /*
     if (strcmp(ALGORITMO_PLANIFICACION, "PRIORIDADES") == 0)
     {
         pthread_mutex_lock(&mutex_ready);
@@ -146,6 +145,7 @@ query_t *obtener_query()
         return query_prioritaria;
     }
     return NULL;
+    */
 }
 
 worker_t *buscar_worker_libre()

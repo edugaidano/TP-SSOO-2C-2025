@@ -29,11 +29,27 @@ void *master_network_handler(void *arg)
 
             if (string_equals_ignore_case(ALGORITMO_PLANIFICACION, "FIFO"))
             {
+                pthread_mutex_unlock(&mutex_ready);
                 list_add(querys_ready, query);
+                pthread_mutex_unlock(&mutex_ready);
             } 
             else if (string_equals_ignore_case(ALGORITMO_PLANIFICACION, "PRIORIDADES"))
             {
-                list_add_sorted(querys_ready, query, priority_comparator); //TODO: if(==0 && no woekers_libres) {desalojar worker}
+                pthread_mutex_unlock(&mutex_ready);
+                int position = list_add_sorted(querys_ready, query, priority_comparator);
+                pthread_mutex_unlock(&mutex_ready);
+
+                if (position == 0) {
+                    worker_t *worker_libre = buscar_worker_libre();
+                    if (worker_libre == NULL)
+                    {
+                       query_t *query_victima = buscar_victima();
+                       if (query_victima->prioridad > query->prioridad)
+                       {
+                           query_victima->worker->interrumpir = true; // Se desalijara cuando verifique la interrupcion
+                       }
+                    }
+                }
             } 
             else
             {
@@ -96,14 +112,15 @@ void *query_handler(void *arg)
     switch (query->state)
     {
     case READY:
-        log_info(logger_master, "la query no estaba en ninguna cpu, eliminando query, id: %d", query->id);
+        log_info(logger_master, "la query no estaba en ningun worker, eliminando query, id: %d", query->id);
         log_info(logger_master, "la query fue eliminada, querys en ready: %d", list_size(querys_ready) - 1);
         destruir_query(query);
         break;
     case EXEC:
-        log_info(logger_master, "la query: <%d> estaba en exec, desalojando cpu: %s", query->id, query->worker->id);
+        log_info(logger_master, "la query: <%d> estaba en exec, desalojando worker: %s", query->id, query->worker->id);
         query->interrumpir = true;
-        sem_wait(&(query->worker->sem_interrupt));
+        sem_t sem_worker = query->worker->sem_interrupt;
+        sem_wait(&(sem_worker));
         log_info(logger_master, "la query fue eliminada, querys en exec: %d", list_size(querys_exec) - 1);
         destruir_query(query);
         break;
@@ -122,7 +139,6 @@ void *query_handler(void *arg)
 void *worker_handler(void *arg)
 {
     worker_t *worker = arg;
-    query_t *query = worker->query;
     while (true)
     {
         t_list *package = recv_package(worker->socket, logger_master);
@@ -139,11 +155,15 @@ void *worker_handler(void *arg)
                 log_error(logger_master, "Error al enviar interrupción al Worker <%s>", worker->id);
                 return NULL;
             }
-            
+
             if (worker->interrumpir) // Interrupcion del master (algoritmo de desalojo)
             {
                 int new_pc = *(int*) list_get(package, 0);
                 worker->query->pc = new_pc;
+                pthread_mutex_unlock(&mutex_ready);
+                list_add_sorted(querys_ready, worker->query, priority_comparator);
+                sem_post(&sem_ready);
+                pthread_mutex_unlock(&mutex_ready);
             }
 
             if (worker->query->interrumpir) // Interrupcion por desconexion de query_control
@@ -153,7 +173,7 @@ void *worker_handler(void *arg)
 
             if (result)
             {
-                liberar_worker(query->worker);
+                liberar_worker(worker);
                 sem_post(&sem_workers);
             }
 
@@ -191,7 +211,7 @@ void *worker_handler(void *arg)
         {
             if (worker->state == EXEC)
             {
-                finalizar_query(query, ERR_DESC_WORKER);
+                finalizar_query(worker->query, ERR_DESC_WORKER);
                 destruir_worker(worker);
             }
             else
