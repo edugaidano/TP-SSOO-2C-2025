@@ -3,7 +3,7 @@
 void *process_handler(void *arg)
 {
     
-    if (string_equals_ignore_case(ALGORITMO_PLANIFICACION, "PRIORIDADES"))
+    if (TIEMPO_AGING != 0 && string_equals_ignore_case(ALGORITMO_PLANIFICACION, "PRIORIDADES"))
     {
         pthread_t actualizador_de_prioridad;
         pthread_create(&actualizador_de_prioridad, NULL, &actualizador, NULL);
