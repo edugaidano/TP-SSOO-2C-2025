@@ -8,7 +8,7 @@
 typedef struct {
     int tamanio;
     t_list* blocks;    
-    char estado[32];
+    char* estado;
 } t_metadata_file;
 
 // Crea File:Tag

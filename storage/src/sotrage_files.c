@@ -62,7 +62,7 @@ t_metadata_file* storage_metadata_read(const char* file_name, const char* tag)
 
     t_metadata_file* meta = malloc(sizeof(t_metadata_file));
     meta->tamanio = config_get_int_value(config, "TAMAÑO");
-    string_ncopy(meta->estado, config_get_string_value(config, "ESTADO"), sizeof(meta->estado));
+    meta->estado = string_duplicate(config_get_string_value(config, "ESTADO"));
 
     meta->blocks = list_create();
     char** blocks_array = config_get_array_value(config, "BLOCKS");

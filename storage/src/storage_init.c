@@ -6,7 +6,7 @@ void init(char *config_name)
     log_info(logger_storage, "Logger del Storage inicializado correctamente");
 
     char *config_path = build_config_path(config_name, logger_storage);
-    t_config *config_storage = config_create(config_path);
+    config_storage = config_create(config_path);
 
     PUERTO_ESCUCHA = config_get_string_value(config_storage, "PUERTO_ESCUCHA");
     FRESH_START = config_get_int_value(config_storage, "FRESH_START");
@@ -35,6 +35,4 @@ void init(char *config_name)
     }
 
     log_info(logger_storage, "Bitmap inicializado correctamente (%d bloques)", blocks_count);
-
-    config_destroy(config_storage);
 }

@@ -35,5 +35,6 @@ int main(int argc, char *argv[])
         pthread_detach(client_thread);
     }
 
+    config_destroy(config_storage);
     return 0;
 }
