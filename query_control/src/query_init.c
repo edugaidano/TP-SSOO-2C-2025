@@ -18,7 +18,7 @@ void init(char *config_name, char *query_name)
     IP_MASTER = config_get_string_value(config_query_control, "IP_MASTER");
     LOG_LEVEL = config_get_string_value(config_query_control, "LOG_LEVEL");
 
-    char *log_file = string_from_format("log_%s.log", query_name);
+    char *log_file = string_from_format("logs_%s.log", query_name);
     logger_query_control = log_create(log_file, "query_control", true, log_level_from_string(LOG_LEVEL));
     free(log_file);
     log_info(logger_query_control, "log inicializado correctamente");

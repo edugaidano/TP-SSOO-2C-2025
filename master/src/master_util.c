@@ -1,4 +1,4 @@
-#include <master_util.h>
+#include "master_util.h"
 
 int asign_query_id()
 {
@@ -16,10 +16,12 @@ void finalizar_query(query_t *query, razon_fin razon)
     switch (razon)
     {
     case FINALIZACION_CORRECTA:
-        log_info(logger_master, "## Se terminó la Query <%d> en el Worker <%s>", query->id, query->worker->id);
+        log_info(logger_master, "## Se terminó la Query %d en el Worker %s", query->id, query->worker->id);
         break;
     case ERR_DESC_WORKER:
-        log_info(logger_master, "## Se desconecta el Worker <%s> - Se finaliza la Query <%d> - Cantidad total de Workers: <%d> ", query->worker->id, query->id, (list_size(workers) - 1));
+        log_info(logger_master, 
+            "## Se desconecta el Worker %s - Se finaliza la Query %d - Cantidad total de Workers: %d", 
+            query->worker->id, query->id, (list_size(workers) - 1));
         break;
     default:
         break;
@@ -94,7 +96,9 @@ void notificar_read(query_t *query, char *file, char *tag, char *contenido)
     agregar_a_paquete(paquete, contenido, string_length(contenido) + 1);
     enviar_paquete(query->socket, paquete, logger_master);
 
-    log_info(logger_master, "## Se envía un mensaje de lectura de la Query <%d> en el Worker <%s> al Query Control", query->id, query->worker->id);
+    log_info(logger_master, 
+        "## Se envía un mensaje de lectura de la Query %d en el Worker %s al Query Control", 
+        query->id, query->worker->id);
 }
 
 void liberar_worker(worker_t *worker)
@@ -124,28 +128,6 @@ query_t *obtener_query()
     query_t *query = list_remove(querys_ready, 0);
     pthread_mutex_unlock(&mutex_ready);
     return query;
-    
-    /*
-    if (strcmp(ALGORITMO_PLANIFICACION, "PRIORIDADES") == 0)
-    {
-        pthread_mutex_lock(&mutex_ready);
-        t_list_iterator *iterator = list_iterator_create(querys_ready);
-        query_t *query_prioritaria = list_iterator_next(iterator);
-        while (list_iterator_has_next(iterator))
-        {
-            query_t *query = list_iterator_next(iterator);
-            if (query->prioridad < query_prioritaria->prioridad)
-            {
-                query_prioritaria = query;
-            }
-        }
-        list_remove_element(querys_ready, query_prioritaria);
-        pthread_mutex_unlock(&mutex_ready);
-        list_iterator_destroy(iterator);
-        return query_prioritaria;
-    }
-    return NULL;
-    */
 }
 
 worker_t *buscar_worker_libre()
@@ -196,7 +178,8 @@ void solicitar_ejecucion_query(query_t *query, int socket)
     agregar_a_paquete(paquete, &query->pc, sizeof(int));
     enviar_paquete(socket, paquete, logger_master);
 
-    log_info(logger_master, "## Se envía la Query <%d> al Worker <%s>", query->id, query->worker->id);
+    log_info(logger_master, 
+        "Se envía la Query %d (%d) al Worker %s", query->id, query->prioridad, query->worker->id);
 }
 
 query_t *buscar_victima()

@@ -1,4 +1,4 @@
-#include <master_network_handler.h>
+#include "master_network_handler.h"
 
 void *master_network_handler(void *arg)
 {
@@ -60,8 +60,9 @@ void *master_network_handler(void *arg)
 
             sem_post(&sem_ready);
 
-            log_info(logger_master, "## Se conecta un Query Control para ejecutar la Query <%s> con prioridad <%d>", archivo, prioridad);
-            log_info(logger_master, "## Id asignado: <%d>. Nivel multiprocesamiento <%d>", query->id, list_size(workers));
+            log_info(logger_master, 
+                "## Se conecta un Query Control para ejecutar la Query %s con prioridad %d- Id asignado: %d Nivel multiprocesamiento %d", 
+                archivo, prioridad, query->id, list_size(workers));
 
             pthread_t query_handler_thread;
             pthread_create(&query_handler_thread, NULL, &query_handler, query);
@@ -85,7 +86,7 @@ void *master_network_handler(void *arg)
 
             sem_post(&sem_workers);
 
-            log_info(logger_master, "## Se conecta el Worker <%s> - Cantidad total de Workers: <%d>", id, list_size(workers));
+            log_info(logger_master, "## Se conecta el Worker %s - Cantidad total de Workers: %d", id, list_size(workers));
 
             pthread_t worker_handler_thread;
             pthread_create(&worker_handler_thread, NULL, &worker_handler, worker);
@@ -109,7 +110,9 @@ void *query_handler(void *arg)
     {
         log_error(logger_master, "opcode no identificado en master");
     }
-    log_info(logger_master, "## Se desconecta un Query Control. Se finaliza la Query <%d> con prioridad <%d>. Nivel multiprocesamiento <%d>", query->id, query->prioridad, list_size(workers));
+    log_info(logger_master, 
+        "## Se desconecta un Query Control. Se finaliza la Query %d con prioridad %d. Nivel multiprocesamiento %d", 
+        query->id, query->prioridad, list_size(workers));
 
     switch (query->state)
     {
@@ -119,7 +122,7 @@ void *query_handler(void *arg)
         destruir_query(query);
         break;
     case EXEC:
-        log_info(logger_master, "la query: <%d> estaba en exec, desalojando worker: %s", query->id, query->worker->id);
+        log_info(logger_master, "la query: %d estaba en exec, desalojando worker: %s", query->id, query->worker->id);
         query->interrumpir = true;
         sem_t sem_worker = query->worker->sem_interrupt;
         sem_wait(&(sem_worker));
@@ -127,7 +130,7 @@ void *query_handler(void *arg)
         destruir_query(query);
         break;
     case FINISHED:
-        log_info(logger_master, "la query <%d> notifica de su finalizacion, liberando recursos", query->id);
+        log_info(logger_master, "la query %d notifica de su finalizacion, liberando recursos", query->id);
         destruir_query(query);
         break;
     default:
@@ -154,12 +157,15 @@ void *worker_handler(void *arg)
             
             if (send(worker->socket, &result, sizeof(bool), 0) <= 0) 
             {
-                log_error(logger_master, "Error al enviar interrupción al Worker <%s>", worker->id);
+                log_error(logger_master, "Error al enviar interrupción al Worker %s", worker->id);
                 return NULL;
             }
 
             if (worker->interrumpir) // Interrupcion del master (algoritmo de desalojo)
             {
+                log_info(logger_master, 
+                    "## Se desaloja la Query %d(%d) del Worker %s - Motivo: PRIORIDAD", 
+                    worker->query->id, worker->query->prioridad, worker->id);
                 int new_pc = *(int*) list_get(package, 0);
                 worker->query->pc = new_pc;
                 pthread_mutex_unlock(&mutex_ready);
@@ -170,6 +176,9 @@ void *worker_handler(void *arg)
 
             if (worker->query->interrumpir) // Interrupcion por desconexion de query_control
             {
+                log_info(logger_master, 
+                    "## Se desaloja la Query %d(%d) del Worker %s - Motivo: DESCONEXION", 
+                    worker->query->id, worker->query->prioridad, worker->id);
                 sem_post(&(worker->sem_interrupt));
             }
 
@@ -190,7 +199,7 @@ void *worker_handler(void *arg)
             resultado_t result = OK;
             if (send(worker->socket, &result, sizeof(bool), 0) <= 0) 
             {
-                log_error(logger_master, "Error al enviar el resultado de la lectura al Worker <%s>", worker->id);
+                log_error(logger_master, "Error al enviar el resultado de la lectura al Worker %s", worker->id);
                 return NULL;
             }
             break;
@@ -202,7 +211,7 @@ void *worker_handler(void *arg)
             resultado_t result = OK;
             if (send(worker->socket, &result, sizeof(resultado_t), 0) <= 0) 
             {
-                log_error(logger_master, "Error al enviar el resultado del exit al Worker <%s>", worker->id);
+                log_error(logger_master, "Error al enviar el resultado del exit al Worker %s", worker->id);
                 return NULL;
             }
             liberar_worker(worker);
@@ -218,7 +227,9 @@ void *worker_handler(void *arg)
             }
             else
             {
-                log_info(logger_master, "## Se desconecta el Worker <%s> - No habia una query en ejecucion - Cantidad total de Workers: <%d> ", worker->id, list_size(workers) - 1);
+                log_info(logger_master, 
+                    "Se desconecta el Worker %s - No habia una query en ejecucion - Cantidad total de Workers: %d", 
+                    worker->id, list_size(workers) - 1);
                 destruir_worker(worker);
             }
             list_destroy_and_destroy_elements(package, free);

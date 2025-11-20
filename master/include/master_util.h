@@ -1,8 +1,8 @@
 #ifndef MASTER_UTIL
 #define MASTER_UTIL
 
-#include <master_globals.h>
-#include <utils/paquetes.h>
+#include "master_globals.h"
+#include "utils/paquetes.h"
 
 int asign_query_id();
 void liberar_query(query_t *query, int pc);

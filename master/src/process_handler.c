@@ -9,13 +9,6 @@ void *process_handler(void *arg)
         pthread_create(&actualizador_de_prioridad, NULL, &actualizador, NULL);
         pthread_detach(actualizador_de_prioridad);
     }
-    /*
-    if (string_equals_ignore_case(ALGORITMO_PLANIFICACION, "PRIORIDADES"))
-    {
-        pthread_t hilo_desalojador;
-        pthread_create(&hilo_desalojador, NULL, &desalojador, NULL);
-    }
-    */
     
     while (1)
     {
@@ -28,57 +21,6 @@ void *process_handler(void *arg)
         hacer_par_query_worker(query, worker);
         solicitar_ejecucion_query(query, worker->socket);
     }
-    return 0;
-}
-
-void *esperar_respuesta(void *arg)
-{
-    query_t *query = *(query_t **)arg;
-    free(arg);
-    int socket = query->worker->socket;
-
-    t_list *list = recv_package(socket, logger_master);
-    op_code opcode = get_opcode(list);
-
-    switch (opcode)
-    {
-    case QUERY_FINALIZADA:
-    {
-        finalizar_query(query, FINALIZACION_CORRECTA);
-        liberar_worker(query->worker);
-        list_destroy_and_destroy_elements(list, free);
-        break;
-    }
-    case NOTIF_READ:
-    {
-        char *contenido = list_get(list, 0);
-        char *file = list_get(list, 1);
-        char *tag = list_get(list, 2);
-        notificar_read(query, file, tag, contenido);
-        list_destroy_and_destroy_elements(list, free);
-        esperar_respuesta(&query);
-        break;
-    }
-    case QUERY_DESALOJADA:
-    {
-        int pc = atoi(list_get(list, 0));
-        worker_t *worker = query->worker;
-        query_t *query_desalojada = query;
-
-        liberar_worker(query->worker);
-        liberar_query(query, pc);
-
-        query_t *query = obtener_query();
-        hacer_par_query_worker(query, worker);
-
-        log_info(logger_master, "## Se desaloja la Query <%d> (<%d>) y comienza a ejecutar la Query <%d> (<%d>) en el Worker <%s>", query_desalojada->id, query_desalojada->prioridad, query->id, query->prioridad, worker->id);
-        solicitar_ejecucion_query(query, query->worker->socket);
-        list_destroy_and_destroy_elements(list, free);
-        break;
-    }
-    default:;
-    }
-
     return 0;
 }
 
@@ -97,7 +39,7 @@ void *actualizador()
             if (query->prioridad > 0)
             {
                 query->prioridad--;
-                log_info(logger_master, "##<%d> Cambio de prioridad: <%d> - <%d>", query->id, (query->prioridad + 1), query->prioridad);
+                log_info(logger_master, "##%d Cambio de prioridad: %d - %d", query->id, (query->prioridad + 1), query->prioridad);
             }
         }
 
