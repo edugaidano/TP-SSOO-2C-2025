@@ -9,6 +9,7 @@ extern t_log *logger_query_control;
 extern t_config *config_query_control;
 extern char *PUERTO_MASTER;
 extern char *IP_MASTER;
+extern char *LOG_LEVEL;
 
 extern int socket_master;
 

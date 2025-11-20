@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    init(argv[1]);
+    init(argv[1], argv[2]);
     atexit(notificar_y_liberar);
     signal(SIGINT, exit);
 
@@ -74,13 +74,13 @@ void recibir_mensaje()
                 switch (razon)
                 {
                     case FINALIZACION_CORRECTA:
-                        log_info(logger_query_control, "## Query finalizada - <La ejecución finalizó correctamente>");
+                        log_info(logger_query_control, "## Query finalizada - La ejecución finalizó correctamente");
                         break;
                     case ERR_DESC_WORKER:
-                        log_info(logger_query_control, "## Query finalizada - <La ejecución finalizó por desconexión del worker>");
+                        log_info(logger_query_control, "## Query finalizada - La ejecución finalizó por desconexión del worker");
                         break;
                     default:
-                        log_warning(logger_query_control, "Query finalizada - motivo desconocido o no definido correctamente");
+                        log_warning(logger_query_control, "## Query finalizada - motivo desconocido o no definido correctamente");
                         break;
                 }
                 list_destroy_and_destroy_elements(package, free);
@@ -91,7 +91,7 @@ void recibir_mensaje()
                 char *file = (char *)list_get(package, 1);
                 char *tag = (char *)list_get(package, 2);
                 char *contenido = (char *)list_get(package, 3);
-                log_info(logger_query_control, "## Lectura realizada: Archivo <%s:%s>, contenido: <%s>", file, tag, contenido);
+                log_info(logger_query_control, "## Lectura realizada: Archivo %s:%s, contenido: %s", file, tag, contenido);
                 break;
             }
             default:

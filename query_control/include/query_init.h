@@ -5,6 +5,6 @@
 #include "utils/pathing.h"
 #include <commons/string.h>
 
-void init(char *ruta_config);
+void init(char *config_name, char *query_name);
 
 #endif
