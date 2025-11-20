@@ -6,6 +6,7 @@
 #include <commons/bitarray.h>
 #include <stdbool.h>
 #include <sys/stat.h>
+#include <sys/mman.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <string.h>

@@ -1,6 +1,8 @@
 #ifndef STORAGE_INIT_H
 #define STORAGE_INIT_H
 
+#include "storage_bitmap.h"
+#include "storage_fresh_start.h"
 #include "storage_globals.h"
 #include "utils/pathing.h"
 #include <commons/log.h>

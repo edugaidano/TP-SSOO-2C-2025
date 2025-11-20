@@ -27,17 +27,36 @@ void storage_fresh_start(const char* mount_point, int fs_size, int block_size)
 
     // Crear bitmap.bin
     int bitmap_bytes = (blocks_count + 7) / 8;
-    FILE* bitmap = fopen("bitmap.bin", "wb");
+    FILE* bitmap = fopen("bitmap.bin", "w+b");
     if (!bitmap) {
         log_error(logger_storage, "No se pudo crear bitmap.bin");
         return;
     }
 
-    unsigned char zero = 0x00;
-    for (int i = 0; i < bitmap_bytes; i++) {
-        fwrite(&zero, 1, 1, bitmap);
+    int bitmap_fd = fileno(bitmap); 
+
+    ftruncate(bitmap_fd, bitmap_bytes);
+
+    char* bit_ptr = (char*)mmap(NULL, bitmap_bytes, PROT_WRITE | PROT_READ, MAP_SHARED, bitmap_fd, 0);
+    if (bit_ptr == MAP_FAILED)
+    {
+        log_error(logger_storage, "Error al mapear bitmap.bin");
+        fclose(bitmap);
+        return;
     }
+
+    t_bitarray* bitarray_ptr = bitarray_create_with_mode(bit_ptr, bitmap_bytes, LSB_FIRST);
+
+    for (int i = 0; i < (bitmap_bytes * 8); i++) {
+        bitarray_clean_bit(bitarray_ptr, i);
+    }
+
+    msync(bit_ptr, bitmap_bytes, MS_SYNC);
+
+    bitarray_destroy(bitarray_ptr);
+    munmap(bit_ptr, bitmap_bytes);
     fclose(bitmap);
+
     log_info(logger_storage, "bitmap.bin creado (%d bytes)", bitmap_bytes);
 
     // Crear bloque físico inicial
@@ -73,4 +92,5 @@ void storage_fresh_start(const char* mount_point, int fs_size, int block_size)
 
     log_info(logger_storage, "FRESH_START completado correctamente.");
     log_info(logger_storage, "Directorio base creado en %s", mount_point);
+    chdir("..");
 }

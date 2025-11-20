@@ -2,6 +2,7 @@
 #define STORAGE_BITMAP_H
 
 #include <commons/bitarray.h>
+#include <commons/string.h>
 #include <pthread.h>
 #include "storage_globals.h"
 

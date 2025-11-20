@@ -151,19 +151,22 @@ query_t *obtener_query()
 worker_t *buscar_worker_libre()
 {
     pthread_mutex_lock(&mutex_workers);
-    t_list_iterator *iterator = list_iterator_create(workers);
-    while (list_iterator_has_next(iterator))
+    if (!list_is_empty(workers))
     {
-        worker_t *worker = list_iterator_next(iterator);
-        if (worker->state == READY)
+        t_list_iterator *iterator = list_iterator_create(workers);
+        while (list_iterator_has_next(iterator))
         {
-            pthread_mutex_unlock(&mutex_workers);
-            list_iterator_destroy(iterator);
-            return worker;
+            worker_t *worker = list_iterator_next(iterator);
+            if (worker->state == READY)
+            {
+                pthread_mutex_unlock(&mutex_workers);
+                list_iterator_destroy(iterator);
+                return worker;
+            }
         }
+        list_iterator_destroy(iterator);
     }
     pthread_mutex_unlock(&mutex_workers);
-    list_iterator_destroy(iterator);
     return NULL;
 }
 

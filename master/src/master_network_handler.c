@@ -9,7 +9,7 @@ void *master_network_handler(void *arg)
         int connection_socket = accept_connection(socket_server, logger_master);
         t_list *list = recv_package(connection_socket, logger_master);
         op_code opcode = get_opcode(list);
-        //
+
         switch (opcode)
         {
         case HANDSHAKE_QUERY_MASTER:
@@ -41,7 +41,7 @@ void *master_network_handler(void *arg)
 
                 if (position == 0) {
                     worker_t *worker_libre = buscar_worker_libre();
-                    if (worker_libre == NULL)
+                    if (worker_libre == NULL && !list_is_empty(workers))
                     {
                        query_t *query_victima = buscar_victima();
                        if (query_victima->prioridad > query->prioridad)
@@ -92,7 +92,9 @@ void *master_network_handler(void *arg)
             pthread_detach(worker_handler_thread);
             break;
         }
-        default:;
+        default:
+            log_error(logger_master, "opcode no reconocido como handshake");
+            break;
         }
         list_destroy_and_destroy_elements(list, free);
     }

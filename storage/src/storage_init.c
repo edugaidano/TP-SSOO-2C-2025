@@ -9,7 +9,7 @@ void init(char *config_name)
     config_storage = config_create(config_path);
 
     PUERTO_ESCUCHA = config_get_string_value(config_storage, "PUERTO_ESCUCHA");
-    FRESH_START = config_get_int_value(config_storage, "FRESH_START");
+    FRESH_START = config_get_string_value(config_storage, "FRESH_START");
     RETARDO_OPERACION = config_get_int_value(config_storage, "RETARDO_OPERACION");
     RETARDO_ACCESO_BLOQUE = config_get_int_value(config_storage, "RETARDO_ACCESO_BLOQUE");
     FS_SIZE = config_get_int_value(config_storage, "FS_SIZE");
@@ -18,10 +18,10 @@ void init(char *config_name)
     CANT_WORKERS = 0;
 
     log_info(logger_storage,
-             "Config cargada -> PUERTO:%s | FRESH_START:%d | FS_SIZE:%d | BLOCK_SIZE:%d",
-             PUERTO_ESCUCHA, FRESH_START, FS_SIZE, BLOCK_SIZE);
-
-    if (FRESH_START)
+        "Config cargada -> PUERTO:%s | FRESH_START:%s | FS_SIZE:%d | BLOCK_SIZE:%d",
+        PUERTO_ESCUCHA, FRESH_START, FS_SIZE, BLOCK_SIZE);
+    
+    if (string_equals_ignore_case(FRESH_START, "TRUE"))
     {
         log_info(logger_storage, "Iniciando FRESH_START...");
         storage_fresh_start("FS", FS_SIZE, BLOCK_SIZE);

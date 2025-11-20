@@ -14,8 +14,7 @@ static void* bitmap_data = NULL;
 
 int bitmap_init(const char* mount_point, int blocks_count)
 {
-    char path[256];
-    snprintf(path, sizeof(path), "%s/bitmap.bin", mount_point);
+    char* path = string_from_format("%s/bitmap.bin", mount_point);
 
     bitmap_size = (blocks_count + 7) / 8;
 

@@ -8,7 +8,7 @@ extern t_log *logger_storage;
 
 extern t_config *config_storage;
 extern char *PUERTO_ESCUCHA;
-extern int FRESH_START;
+extern char *FRESH_START;
 extern int RETARDO_OPERACION;
 extern int RETARDO_ACCESO_BLOQUE;
 extern int FS_SIZE;
