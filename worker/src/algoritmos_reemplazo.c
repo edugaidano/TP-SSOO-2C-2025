@@ -110,7 +110,7 @@ void check_file_tag (char* id_actual, char* id_nuevo) {
 
 int actualizar_pagina (nodo_pagina* pagina, char* ft) {
     int nro_marco = pagina->nro_marco;
-    bit_map_marco[nro_marco] = false;
+    bitarray_clean_bit(bit_map, nro_marco);
     pagina->presencia = false;
     pagina->modificado = false;
     char **datos = string_split(ft, ":");

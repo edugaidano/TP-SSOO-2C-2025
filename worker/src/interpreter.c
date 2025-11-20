@@ -43,7 +43,7 @@ void interpretar_DELETE(t_instrucion* instruccion) {
                 nodo_pagina* pagina = list_get(ft->tabla_paginas, i);
 
                 if (pagina->presencia) {
-                    bit_map_marco[pagina->nro_marco] = false;
+                    bitarray_clean_bit(bit_map, pagina->nro_marco);
                     pagina->presencia = false;
                     ft->cantidad_paginas--;
                     log_info(logger_worker, "Query %s: Se libera el Marco: %d perteneciente al - File: %s - Tag: %s", query_id, pagina->nro_marco, datos[0], datos[1]);

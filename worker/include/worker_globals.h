@@ -2,6 +2,7 @@
 #define WORKER_GLOBALS_H
 
 #include "utils/set_instrucciones.h"
+#include <commons/bitarray.h>
 #include <commons/config.h>
 #include <commons/log.h>
 #include <commons/temporal.h>
@@ -46,6 +47,7 @@ extern t_config *config_worker;
 extern char *ALGORITMO_REEMPLAZO;
 extern char *IP_MASTER;
 extern char *IP_STORAGE;
+extern char *LOG_LEVEL;
 extern char *PATH_SCRIPTS;
 extern char *PUERTO_MASTER;
 extern char *PUERTO_STORAGE;
@@ -62,7 +64,7 @@ extern int storage_socket;
 // Memoria //
 
 extern void *memoria;
-extern bool *bit_map_marco;
+extern t_bitarray *bit_map;
 extern t_list *marco;
 extern t_list *file_tag_pages;
 extern int tam_pagina;

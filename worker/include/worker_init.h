@@ -8,6 +8,6 @@
 #include <commons/config.h>
 #include <commons/string.h>
 
-void init(char *ruta_config);
+void init(char *config_name, char *worker_name);
 
 #endif

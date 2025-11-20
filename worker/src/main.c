@@ -9,7 +9,7 @@ int main(int argc, char *argv[])
     }
 
     // Iniciar Logs y Configs
-    init(argv[1]);
+    init(argv[1], argv[2]);
     marco = list_create();
     file_tag_pages = list_create();
     char ack[4];

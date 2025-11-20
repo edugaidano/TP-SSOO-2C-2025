@@ -45,7 +45,7 @@ void liberar_recursos() {
         list_destroy_and_destroy_elements(instrucciones, destruir_instruccion);
     }    
     free(memoria);
-    free(bit_map_marco);
+    bitarray_destroy(bit_map);
     close(master_socket);
     close(storage_socket);
     log_destroy(logger_worker);

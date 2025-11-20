@@ -22,9 +22,10 @@ void init_memoria() {
     }
     
     // bitmap
-    bit_map_marco = malloc( sizeof(bool) * cantidad_marcos);
-    for (int i = 0; i < cantidad_marcos; i++) {
-        bit_map_marco[i] = false;
+    int bytes_bit_map = (cantidad_marcos + 7)/ 8;
+    bit_map = bitarray_create_with_mode((char*)malloc(bytes_bit_map), bytes_bit_map, LSB_FIRST);
+    for (int i = 0; i < bytes_bit_map * 8; i++) {
+        bitarray_clean_bit(bit_map, i);
     }
 
     if (string_equals_ignore_case(ALGORITMO_REEMPLAZO, "CLOCK-M")) {
@@ -184,7 +185,7 @@ void leer_pagina(nodo_pagina* pagina, char*identificador, int direccion, int siz
 
 int marco_libre() {
     for (int i = 0; i < cantidad_marcos; i++) {
-        if (!bit_map_marco[i]) {
+        if (!bitarray_test_bit(bit_map, i)) {
             return i;
         }
     }
@@ -259,7 +260,7 @@ nodo_pagina* solicitar_pagina(char* identificador, int nro_pagina) {
         indice = algoritmo_reemplazo(identificador, nro_pagina);
     }
     log_info(logger_worker, "Query %s: Se asigna el Marco: %i a la Página: %i perteneciente al - File: %s - Tag: %s", query_id, indice, nro_pagina, datos[0], datos[1]);
-    bit_map_marco[indice] = true;
+    bitarray_set_bit(bit_map, indice);
     nodo_pagina* pagina = list_get(ft->tabla_paginas, nro_pagina);
     pagina->nro_marco = indice;
     pagina->presencia = true;

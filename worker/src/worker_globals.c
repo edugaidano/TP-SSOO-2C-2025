@@ -6,6 +6,7 @@ t_config *config_worker;
 char *ALGORITMO_REEMPLAZO;
 char *IP_MASTER;
 char *IP_STORAGE;
+char *LOG_LEVEL;
 char *PATH_SCRIPTS;
 char *PUERTO_MASTER;
 char *PUERTO_STORAGE;
@@ -18,7 +19,7 @@ int master_socket = -1;
 int storage_socket = -1;
 
 void *memoria;
-bool *bit_map_marco;
+t_bitarray *bit_map;
 t_list *marco;
 t_list *file_tag_pages;
 int tam_pagina;
