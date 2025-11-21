@@ -7,7 +7,10 @@
 extern t_log *logger_storage;
 
 extern t_config *config_storage;
+extern t_config *config_super_block;
+extern char *LOG_LEVEL;
 extern char *PUERTO_ESCUCHA;
+extern char *PUNTO_MONTAJE;
 extern char *FRESH_START;
 extern int RETARDO_OPERACION;
 extern int RETARDO_ACCESO_BLOQUE;

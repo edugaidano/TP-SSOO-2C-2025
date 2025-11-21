@@ -17,3 +17,10 @@ obj/
 !.vscode/launch.json
 !.vscode/settings.json
 !.vscode/tasks.json
+
+# FS files and directories
+bitmap.bin
+blocks_hash_index.config
+FS/
+files/
+physical_blocks/

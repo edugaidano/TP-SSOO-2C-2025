@@ -1,9 +1,12 @@
 #ifndef STORAGE_FRESH_START_H
 #define STORAGE_FRESH_START_H
 
+#include "storage_globals.h"
 #include <commons/log.h>
 #include <commons/config.h>
 #include <commons/bitarray.h>
+#include <commons/string.h>
+#include <errno.h>
 #include <stdbool.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
@@ -13,9 +16,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-extern t_log* logger_storage;
-
 // Función principal de creación
-void storage_fresh_start(const char* mount_point, int fs_size, int block_size);
+void storage_fresh_start();
 
 #endif

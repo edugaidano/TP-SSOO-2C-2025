@@ -31,7 +31,7 @@ void *storage_worker_handler(void *arg)
             send(socket, &BLOCK_SIZE, sizeof(int), 0);
 
             log_info(logger_storage,
-                     "##Se conecta el Worker <%s> - Cantidad de Workers: <%d>",
+                     "##Se conecta el Worker %s - Cantidad de Workers: %d",
                      id_worker, CANT_WORKERS);
             break;
         }
@@ -49,7 +49,7 @@ void *storage_worker_handler(void *arg)
             enviar_paquete(socket, size_tag_file, logger_storage);
 
             log_info(logger_storage,
-                     "El Worker <%s> Solicito informacion sobre %s:%s",
+                     "El Worker %s Solicito informacion sobre %s:%s",
                      id_worker, file, tag);
             break;
         }
@@ -122,7 +122,7 @@ void *storage_worker_handler(void *arg)
         {
             CANT_WORKERS--;
             log_info(logger_storage,
-                     "##Se desconecta el Worker <%s> - Cantidad de Workers: <%d>",
+                     "##Se desconecta el Worker %s - Cantidad de Workers: %d",
                      id_worker, CANT_WORKERS);
             close(socket);
             return NULL;
@@ -130,7 +130,7 @@ void *storage_worker_handler(void *arg)
         default:
         {
             log_warning(logger_storage,
-                        "##Worker <%s> - Operación desconocida (opcode=%d)",
+                        "##Worker %s - Operación desconocida (opcode=%d)",
                         id_worker ? id_worker : "?", opcode);
             break;
         }
