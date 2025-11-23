@@ -56,6 +56,9 @@ void init(char *config_name)
 
     log_info(logger_storage, "Config superblock cargada -> FS_SIZE:%d | BLOCK_SIZE:%d", FS_SIZE, BLOCK_SIZE);
 
+    // HASH_INDEX
+    config_hash_index = config_create("blocks_hash_index.config");
+
     // BITMAP
     int blocks_count = FS_SIZE / BLOCK_SIZE;
     if (bitmap_init(PUNTO_MONTAJE, blocks_count) < 0)

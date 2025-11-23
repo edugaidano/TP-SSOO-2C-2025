@@ -4,6 +4,7 @@ t_log *logger_storage;
 
 t_config *config_storage;
 t_config *config_super_block;
+t_config *config_hash_index;
 char *LOG_LEVEL;
 char *PUERTO_ESCUCHA;
 char *PUNTO_MONTAJE;

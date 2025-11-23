@@ -8,6 +8,7 @@ extern t_log *logger_storage;
 
 extern t_config *config_storage;
 extern t_config *config_super_block;
+extern t_config *config_hash_index;
 extern char *LOG_LEVEL;
 extern char *PUERTO_ESCUCHA;
 extern char *PUNTO_MONTAJE;
