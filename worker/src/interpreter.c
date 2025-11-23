@@ -73,8 +73,8 @@ void interpretar_FLUSH(t_instrucion* instruccion) {
                 nodo_pagina* pagina = list_get(ft->tabla_paginas, j);
                 if (pagina->modificado && pagina->presencia) {
                     agregar_a_paquete(paquete, &(pagina->nro_pagina), sizeof(int));
-                    char* info = list_get(marco, pagina->nro_marco);
-                    agregar_a_paquete(paquete, info, tam_pagina);
+                    nodo_marco* n_marco = list_get(marco, pagina->nro_marco);
+                    agregar_a_paquete(paquete, n_marco->puntero_marco, tam_pagina);
                 }
             }
             break;
@@ -97,6 +97,11 @@ void interpretar_TRUNCATE(t_instrucion* instruccion) {
     agregar_a_paquete(paquete, &size, sizeof(int));                                  // TAMAÑO
 
     enviar_paquete_a(paquete, storage_socket, "Storage", instruccion->identificador);
+
+    file_tag* ft = file_tag_en_memoria(instruccion->datos[0]);
+    if (ceil(size/tam_pagina) != ft->cantidad_paginas) {
+        actualizar_tabla(ft);
+    }
 }
 
 void interpretar_TAG(t_instrucion* instruccion) {
@@ -153,7 +158,7 @@ void log_ejecucion(resultado_t resultado, char* instruccion) {
             exit(EXIT_FAILURE);
             break;
         default:
-            log_error(logger_worker, "No se resonoce el resultado al ejecutar instruccion %s", instruccion);
+            log_error(logger_worker, "No se reconoce el resultado al ejecutar instruccion %s (R = %d)", instruccion, resultado);
             exit(EXIT_FAILURE);
             break;
     }
@@ -161,14 +166,13 @@ void log_ejecucion(resultado_t resultado, char* instruccion) {
 
 void enviar_paquete_a(paquete_t* paquete, int fd, char* modulo, char* instruccion) {
     void* paquete_s = serializar_paquete(paquete);
-    if (send(fd, paquete_s, espacio_paquete_serializado(paquete), 0) <= 0) {
-        log_error(logger_worker, "Error o desconeccion en %s al enviar instruccion %s", modulo, instruccion);
-        destruir_paquete(paquete);
-        free(paquete_s);
-        exit(EXIT_FAILURE);
-    }
+    int result_send = send(fd, paquete_s, espacio_paquete_serializado(paquete), 0);
     destruir_paquete(paquete);
     free(paquete_s);
+    if (result_send <= 0) {
+        log_error(logger_worker, "Error o desconeccion en %s al enviar instruccion %s", modulo, instruccion);
+        exit(EXIT_FAILURE);
+    }
 
     resultado_t resultado;
     if (recv(fd, &resultado, sizeof(resultado_t), MSG_WAITALL) <= 0) {

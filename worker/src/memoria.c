@@ -6,6 +6,8 @@ int marco_libre();
 void interaccion_con_memoria(void* dest, void* src, int size, nodo_marco* n_marco);
 file_tag* agregar_file_tag_en_memoria(char* identificador);
 nodo_pagina* solicitar_pagina(char* identificador, int nro_pagina);
+int solicitar_metadata(char* identificador);
+nodo_pagina* generar_nodo_pagina(int nro_pagina);
 
 // Public Functions //
 
@@ -77,6 +79,9 @@ void free_file_tag(void* arg) {
 
 nodo_pagina* pagina_en_Tabla(char* identificador, int nro_pagina) {
     file_tag* ft = file_tag_en_memoria(identificador);
+    if (nro_pagina > list_size(ft->tabla_paginas)) {
+        actualizar_tabla(ft);
+    }
     
     nodo_pagina* pagina = list_get(ft->tabla_paginas, nro_pagina);
     if (pagina->presencia) {
@@ -88,7 +93,7 @@ nodo_pagina* pagina_en_Tabla(char* identificador, int nro_pagina) {
 
 void escribir_pagina(nodo_pagina* pagina, char* identificador, int direccion_base, char* datos) {
     int direccion_en_pagina = direccion_base % tam_pagina;
-    int size_dato = string_length(datos) + 1;
+    int size_dato = string_length(datos);
 
     nodo_marco* n_marco = list_get(marco, pagina->nro_marco);
 
@@ -181,6 +186,42 @@ void leer_pagina(nodo_pagina* pagina, char*identificador, int direccion, int siz
     free(lectura);
 }
 
+void actualizar_tabla(file_tag* ft) {
+    int size = solicitar_metadata(ft->identificador);
+    int new_cant_paginas = (int)ceil(size/tam_pagina);
+    int old_cant_paginas = list_size(ft->tabla_paginas);
+
+    if (new_cant_paginas > old_cant_paginas) {
+        for (int i = old_cant_paginas; i < new_cant_paginas; i++) {
+            nodo_pagina* node_pg = generar_nodo_pagina(i);
+            list_add(ft->tabla_paginas, node_pg);
+        }
+    } else {
+        t_list* new_page_table = list_take(ft->tabla_paginas, new_cant_paginas);
+        for (int i = new_cant_paginas; i < old_cant_paginas; i++) {
+            int nro_entrada = list_size(ft->tabla_paginas) - 1;
+            nodo_pagina* node_pg = (nodo_pagina*)list_remove(ft->tabla_paginas, nro_entrada);
+            if (node_pg->presencia) {
+                if (node_pg->modificado) {
+                    log_error(logger_worker, "Se encontro una pagina presente en memoria modificada que no existe en storage");
+                    free(node_pg);
+                    list_destroy_and_destroy_elements(new_page_table, free);
+                    exit(EXIT_FAILURE);
+                } else {
+                    bitarray_clean_bit(bit_map, node_pg->nro_marco);
+                    free(node_pg);
+                    char** datos = string_get_string_as_array(ft->identificador);
+                    log_info(logger_worker, "Query %s: Se libera el Marco: %d perteneciente al - File: %s - Tag: %s", query_id, node_pg->nro_marco, datos[0], datos[1]);
+                    string_array_destroy(datos);
+                }  
+                ft->cantidad_paginas--; 
+            }
+        }
+        list_destroy(ft->tabla_paginas);
+        ft->tabla_paginas = new_page_table;
+    }
+}
+
 // Private Functions //
 
 int marco_libre() {
@@ -200,39 +241,19 @@ void interaccion_con_memoria(void* dest, void* src, int size, nodo_marco* n_marc
     }
 }
 
-file_tag* agregar_file_tag_en_memoria(char* identificador) {
-    paquete_t* paquete = crear_paquete(INFO_FILE_TAG_STORAGE);
-    agregar_file_tag(paquete, identificador);
-    enviar_paquete(storage_socket, paquete, logger_worker);
-    
-    paquete = recibir_paquete(storage_socket, logger_worker); // Paquete: Tamaño del FILE:TAG
-    if (paquete->codigo_operacion != INFO_FILE_TAG_WORKER) {
-        log_error(logger_worker, "Se recibio un paquete desconcocido al solicitar informacion sobre %s", identificador);
-        destruir_paquete(paquete);
-        exit(EXIT_FAILURE);
-    }
-    
-    buffer_t* buffer = obtener_siguiente_item(paquete);
+file_tag* agregar_file_tag_en_memoria(char* identificador) {    
+    int size_ft = solicitar_metadata(identificador);
+
     file_tag* ft = malloc(sizeof(file_tag));
     ft->identificador = string_duplicate(identificador);
     ft->tabla_paginas = list_create();
-    ft->cantidad_paginas = 0;
+    ft->cantidad_paginas = ceil(size_ft/tam_pagina);
 
-    int size_ft = *(int*)buffer->stream;
-    int entradas_tabla = ceil(size_ft/size_ft);
-    for (int i = 0; i < entradas_tabla; i++) {
-        nodo_pagina* pagina = malloc(sizeof(nodo_pagina));
-        pagina->nro_pagina = i;
-        pagina->nro_marco = -1;
-        pagina->presencia = false;
-        pagina->modificado = false;
-        pagina->uso = false;
+    for (int i = 0; i < ft->cantidad_paginas ; i++) {
+        nodo_pagina* pagina = generar_nodo_pagina(i);
         list_add_in_index(ft->tabla_paginas, i, pagina);
     }
     list_add(file_tag_pages, ft);
-
-    free_buffer(buffer);
-    destruir_paquete(paquete);
     return ft;
 }
 
@@ -261,9 +282,11 @@ nodo_pagina* solicitar_pagina(char* identificador, int nro_pagina) {
     }
     log_info(logger_worker, "Query %s: Se asigna el Marco: %i a la Página: %i perteneciente al - File: %s - Tag: %s", query_id, indice, nro_pagina, datos[0], datos[1]);
     bitarray_set_bit(bit_map, indice);
+
     nodo_pagina* pagina = list_get(ft->tabla_paginas, nro_pagina);
     pagina->nro_marco = indice;
     pagina->presencia = true;
+
     nodo_marco* n_marco = list_get(marco, indice);
     memcpy(n_marco->puntero_marco, buffer->stream, buffer->size);
     n_marco->identificador = ft->identificador;
@@ -274,5 +297,41 @@ nodo_pagina* solicitar_pagina(char* identificador, int nro_pagina) {
     ft->cantidad_paginas++; 
     log_info(logger_worker, "Query %s: - Memoria Add - File: %s - Tag: %s - Pagina: %d", query_id, datos[0], datos[1], nro_pagina);
     string_array_destroy(datos);
+    return pagina;
+}
+
+int solicitar_metadata(char* identificador) {
+    log_info(logger_worker, "Solicitando tamaño actual del archivo ...");
+    paquete_t* paquete = crear_paquete(INFO_FILE_TAG_STORAGE);
+    agregar_file_tag(paquete, identificador);
+    enviar_paquete(storage_socket, paquete, logger_worker);
+    
+    paquete = recibir_paquete(storage_socket, logger_worker); // Paquete: Tamaño del FILE:TAG
+    if (paquete->codigo_operacion != INFO_FILE_TAG_WORKER) {
+        log_error(logger_worker, "Se recibio un paquete desconcocido al solicitar informacion sobre %s", identificador);
+        destruir_paquete(paquete);
+        exit(EXIT_FAILURE);
+    }
+    buffer_t* buffer = obtener_siguiente_item(paquete);
+    destruir_paquete(paquete);
+
+    int size_ft = *(int*)buffer->stream;
+    free_buffer(buffer);
+    if (size_ft == -1)
+    {
+        log_error(logger_worker, "El file tag no existe en storage");
+        exit(EXIT_FAILURE);
+    }
+    log_info(logger_worker, "El tamaño del archivo es de %d bytes", size_ft);
+    return size_ft;
+}
+
+nodo_pagina* generar_nodo_pagina(int nro_pagina) {
+    nodo_pagina* pagina = malloc(sizeof(nodo_pagina));
+    pagina->nro_pagina = nro_pagina;
+    pagina->nro_marco = -1;
+    pagina->presencia = false;
+    pagina->modificado = false;
+    pagina->uso = false;
     return pagina;
 }

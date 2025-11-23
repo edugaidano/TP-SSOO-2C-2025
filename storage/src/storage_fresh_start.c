@@ -64,23 +64,25 @@ void storage_fresh_start()
 
     log_info(logger_storage, "bitmap.bin creado (%d bytes)", bitmap_bytes);
 
-    // Crear bloque físico inicial
+    // Crear los bloques físicos
     mkdir("physical_blocks", 0777);
     char *zero_block = string_repeat('0', BLOCK_SIZE);
+    
     for (int i = 0; i < blocks_count; i++) {
         char* block_path = string_from_format("physical_blocks/block%04d.dat", i);
 
         FILE* block = fopen(block_path, "wb");
+        free(block_path);
         int block_fd = fileno(block); 
         ftruncate(block_fd, BLOCK_SIZE);
+        fwrite(zero_block, BLOCK_SIZE, 1, block);
         if (i == 0) {
-            fwrite(zero_block, 1, BLOCK_SIZE, block);
-            free(zero_block);
             // TODO: hash
         }
         fclose(block);
-    }    
 
+    }    
+    free(zero_block);
     // Crear estructura de archivos inicial
     mkdir("files/initial_file", 0777);
     mkdir("files/initial_file/BASE", 0777);
@@ -106,5 +108,4 @@ void storage_fresh_start()
 
     log_info(logger_storage, "FRESH_START completado correctamente.");
     log_info(logger_storage, "Directorio base creado en %s", PUNTO_MONTAJE);
-    chdir("..");
 }

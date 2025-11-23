@@ -1,4 +1,4 @@
-#include <storage_worker_handler.h>
+#include "storage_worker_handler.h"
 
 // Valor fijo definido
 #define STORAGE_RESULT_OK 0
@@ -18,7 +18,7 @@ void *storage_worker_handler(void *arg)
             log_error(logger_storage, "Error al recibir paquete del socket %d", socket);
             break;
         }
-
+        
         op_code opcode = get_opcode(package);
 
         switch (opcode)
@@ -39,26 +39,28 @@ void *storage_worker_handler(void *arg)
         {
             char* file = list_get(package, 0);
             char* tag = list_get(package, 1);
-            // TODO: buscar el tamaño total del file:tag
-            // Nota: otra opcion es pasar la cantidad de bloques, habria que modificar un poco la logica en Worker
+
+            t_metadata_file* metadata = storage_metadata_read(file, tag); 
+            int size;
+            if (metadata) {
+                size = metadata->tamanio;
+            } else {
+                size = -1;
+            }
+            storage_metadata_destroy(metadata);
 
             paquete_t* size_tag_file = crear_paquete(INFO_FILE_TAG_WORKER);
-            agregar_a_paquete(size_tag_file, &(int){100}, sizeof(int));
+            agregar_a_paquete(size_tag_file, &size, sizeof(int));
 
-            // Envia resultado fijo
             enviar_paquete(socket, size_tag_file, logger_storage);
 
-            log_info(logger_storage,
-                     "El Worker %s Solicito informacion sobre %s:%s",
-                     id_worker, file, tag);
+            log_info(logger_storage, "El Worker %s Solicito informacion sobre %s:%s", id_worker, file, tag);
             break;
         }
         case INSTRUCCION_STORAGE:
         {
-            // TODO: desglosar paquete en el futuro
-            resultado_t result = STORAGE_RESULT_OK; 
+            resultado_t result = desglozar_instruccion(package);
 
-            // Envia resultado fijo
             if (send(socket, &result, sizeof(resultado_t), 0) <= 0)
             {
                 log_error(logger_storage,
@@ -79,9 +81,7 @@ void *storage_worker_handler(void *arg)
             int nro_pagina = *(int*)list_get(package, 2);
             char* contenido = list_get(package, 3);
             
-            // TODO: modificar la pagina
-
-            resultado_t result = STORAGE_RESULT_OK; 
+            resultado_t result = storage_write(file, tag, nro_pagina, contenido);
 
             // Envia resultado fijo
             if (send(socket, &result, sizeof(resultado_t), 0) <= 0)
@@ -99,23 +99,22 @@ void *storage_worker_handler(void *arg)
         }
         case SOLICITUD_STORAGE:
         {
-            // TODO: en futuros checks enviar datos reales
+            char* file = list_get(package, 0);
+            char* tag = list_get(package, 1);
+            int nro_pagina = *(int*)list_get(package, 2);
+
             paquete_t *page_package = crear_paquete(PAGINA_WORKER);
 
-            // Envia contenido fijo del bloque/página
-            char *contenido_fijo = "A";
-            agregar_a_paquete(page_package, contenido_fijo, strlen(contenido_fijo) + 1);
-            /*
-            // Envia número de página ficticio
-            double pagina = 0.0;
-            agregar_a_paquete(page_package, &pagina, sizeof(double));
-            */
+            char* contenido = (char*)malloc(BLOCK_SIZE);
+            resultado_t r = storage_read(file, tag, nro_pagina, contenido);
 
+            agregar_a_paquete(page_package, contenido, BLOCK_SIZE);
             enviar_paquete(socket, page_package, logger_storage);
+            free(contenido);
 
             log_info(logger_storage,
-                     "##Worker <%s> - Operación recibida: SOLICITUD_STORAGE - Contenido fijo enviado",
-                     id_worker);
+                     "##Worker <%s> - Se envio el contenido de %s:%s - %d",
+                     id_worker, file, tag, nro_pagina);
             break;
         }
         case DESCONEXION:

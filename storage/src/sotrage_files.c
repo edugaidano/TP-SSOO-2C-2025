@@ -14,25 +14,27 @@
 
 
 // Crea un nuevo File:Tag en el FS
-int storage_create(const char* file_name, const char* tag)
+int storage_create(char* file_name, char* tag)
 {
-    char path[256];
-    char metadata_path[256];
-    char logical_blocks_path[256];
-
-    mkdir("FS/files", 0777);
-
-    snprintf(path, sizeof(path), "FS/files/%s", file_name);
+    char* path = string_from_format("%s/files/%s", PUNTO_MONTAJE, file_name);
     mkdir(path, 0777);
+    string_append_with_format(&path, "/%s", tag);
+    int result_mkdir = mkdir(path, 0777);
+    int saved_errno = errno;
+    if (result_mkdir != 0 && saved_errno == EEXIST) {
+        log_error(logger_storage, "Ya existe el file tag");
+        /* ERROR de preexistencia del file:tag*/
+        return STORAGE_RESULT_ERROR;
+    }
 
-    snprintf(path, sizeof(path), "FS/files/%s/%s", file_name, tag);
-    mkdir(path, 0777);
-
-    snprintf(logical_blocks_path, sizeof(logical_blocks_path), "FS/files/%s/%s/logical_blocks", file_name, tag);
+    char* logical_blocks_path = string_from_format("%s/%s", path, "logical_blocks");
     mkdir(logical_blocks_path, 0777);
-
-    snprintf(metadata_path, sizeof(metadata_path), "FS/files/%s/%s/metadata.config", file_name, tag);
+    free(logical_blocks_path);
+    
+    char* metadata_path = string_from_format("%s/%s", path, "metadata.config");
+    free(path);
     FILE* meta = fopen(metadata_path, "w");
+    free(metadata_path);
     if (!meta)
     {
         log_error(logger_storage, "Error al crear metadata.config para %s:%s (%s)", file_name, tag, strerror(errno));
@@ -50,10 +52,9 @@ int storage_create(const char* file_name, const char* tag)
 // Lee la metadata.config de un File:Tag
 t_metadata_file* storage_metadata_read(const char* file_name, const char* tag)
 {
-    char meta_path[256];
-    snprintf(meta_path, sizeof(meta_path), "FS/files/%s/%s/metadata.config", file_name, tag);
-
+    char* meta_path  = string_from_format("files/%s/%s/metadata.config", file_name, tag);
     t_config* config = config_create(meta_path);
+    free(meta_path);
     if (!config)
     {
         log_error(logger_storage, "No se pudo abrir metadata.config de %s:%s", file_name, tag);
@@ -66,11 +67,11 @@ t_metadata_file* storage_metadata_read(const char* file_name, const char* tag)
 
     meta->blocks = list_create();
     char** blocks_array = config_get_array_value(config, "BLOCKS");
-    for (int i = 0; blocks_array[i] != NULL; i++)
+    int cant_blks = string_array_size(blocks_array);
+    for (int i = 0; i < cant_blks; i++)
     {
-        int block_num = atoi(blocks_array[i]);
-        list_add(meta->blocks, (void*)(intptr_t)block_num);
-        // btw intptr_t convierte un puntero a un entero del mismo tamaño y es de la libreria <stdint.h>
+        char* block_num = string_array_pop(blocks_array);
+        list_add_in_index(meta->blocks, 0, block_num);
     }
     string_array_destroy(blocks_array);
 
@@ -85,10 +86,10 @@ t_metadata_file* storage_metadata_read(const char* file_name, const char* tag)
 // Escribe la metadata.config
 void storage_metadata_write(const char* file_name, const char* tag, t_metadata_file* metadata)
 {
-    char meta_path[256];
-    snprintf(meta_path, sizeof(meta_path), "FS/files/%s/%s/metadata.config", file_name, tag);
+    char* meta_path  = string_from_format("files/%s/%s/metadata.config", file_name, tag);
 
     FILE* meta_file = fopen(meta_path, "w");
+    free(meta_path);
     if (!meta_file)
     {
         log_error(logger_storage, "No se pudo abrir metadata.config para escribir %s:%s", file_name, tag);
@@ -96,21 +97,19 @@ void storage_metadata_write(const char* file_name, const char* tag, t_metadata_f
     }
 
     // Serializar la lista de bloques en formato [1,2,3]
-    char blocks_str[512] = "[";
+    char* blocks_str = string_duplicate("[");
     for (int i = 0; i < list_size(metadata->blocks); i++)
     {
-        int blk = (int)(intptr_t)list_get(metadata->blocks, i);
-        char tmp[16];
-        sprintf(tmp, "%d", blk);
-        strcat(blocks_str, tmp);
+        char* nro_blk = list_get(metadata->blocks, i);
+        string_append(&blocks_str, nro_blk);
         if (i < list_size(metadata->blocks) - 1)
-            strcat(blocks_str, ",");
+            string_append(&blocks_str, ",");
     }
-    strcat(blocks_str, "]");
+    string_append(&blocks_str, "]");
 
-    fprintf(meta_file, "TAMAÑO=%d\nBLOCKS=%s\nESTADO=%s\n",
-            metadata->tamanio, blocks_str, metadata->estado);
+    fprintf(meta_file, "TAMAÑO=%d\nBLOCKS=%s\nESTADO=%s\n", metadata->tamanio, blocks_str, metadata->estado);
     fclose(meta_file);
+    free(blocks_str);
 
     log_info(logger_storage, "Metadata actualizada %s:%s (Tamaño=%d, Estado=%s, Bloques=%d)",
              file_name, tag, metadata->tamanio, metadata->estado, list_size(metadata->blocks));
@@ -120,7 +119,8 @@ void storage_metadata_write(const char* file_name, const char* tag, t_metadata_f
 void storage_metadata_destroy(t_metadata_file* metadata)
 {
     if (!metadata) return;
-    list_destroy(metadata->blocks);
+    list_destroy_and_destroy_elements(metadata->blocks, free);
+    free(metadata->estado);
     free(metadata);
 }
 
@@ -135,79 +135,54 @@ int storage_truncate(const char* file_name, const char* tag, int new_size)
 
     // Calcular bloques 
     int current_blocks = list_size(meta->blocks);
-    int needed_blocks = (new_size + BLOCK_SIZE - 1) / BLOCK_SIZE;
+    int needed_blocks = new_size / BLOCK_SIZE;
 
     log_info(logger_storage,
              "##TRUNCATE - %s:%s Tamaño actual=%d (%d bloques) -> Nuevo tamaño=%d (%d bloques)",
              file_name, tag, meta->tamanio, current_blocks, new_size, needed_blocks);
 
+    
+    char* logical_path = string_from_format("files/%s/%s/logical_blocks", file_name, tag);
     // Si necesita más bloques
     if (needed_blocks > current_blocks)
     {
-        int blocks_to_add = needed_blocks - current_blocks;
-        for (int i = 0; i < blocks_to_add; i++)
+        for (int i = current_blocks; i < needed_blocks; i++)
         {
-            int free_block = find_free_block();
-            if (free_block < 0)
-            {
-                log_error(logger_storage, "No hay bloques libres disponibles durante TRUNCATE");
-                break;
-            }
-
-            char phys_path[256];
-            snprintf(phys_path, sizeof(phys_path), "FS/physical_blocks/block%04d.dat", free_block);
-
-            FILE* f = fopen(phys_path, "wb");
-            if (f)
-            {
-                char zeros[BLOCK_SIZE];
-                memset(zeros, 0, BLOCK_SIZE);
-                fwrite(zeros, 1, BLOCK_SIZE, f);
-                fclose(f);
-            }
-
-            // Crea hardlink lógico
-            char logical_path[256];
-            snprintf(logical_path, sizeof(logical_path), "FS/files/%s/%s/logical_blocks/%05d.dat",
-                     file_name, tag, list_size(meta->blocks));
-            link(phys_path, logical_path);
+            char* path = string_from_format("%s/%05d.dat", logical_path, list_size(meta->blocks));
+            link("physical_blocks/block0000.dat", path);
+            free(path);
 
             // Agrega el bloque a metadata
-            list_add(meta->blocks, (void*)(intptr_t)free_block);
+            list_add(meta->blocks, string_duplicate("0"));
 
-            log_info(logger_storage,
-                     "##TRUNCATE - Nuevo bloque asignado %d para %s:%s",
-                     free_block, file_name, tag);
+            log_info(logger_storage, "##TRUNCATE - Nuevo bloque asignado %d para %s:%s", 0, file_name, tag);
         }
-    }
-
+    } 
+    
     // libera los bloques sobrantes
     if (needed_blocks < current_blocks)
     {
         int blocks_to_remove = current_blocks - needed_blocks;
-
+        
         for (int i = 0; i < blocks_to_remove; i++)
         {
             // Último bloque actual
             int last_index = list_size(meta->blocks) - 1;
-            int block_to_free = (int)(intptr_t)list_get(meta->blocks, last_index);
+            int block_to_free = atoi(list_get(meta->blocks, last_index));
 
             // Borrar el hardlink lógico
-            char logical_path[256];
-            snprintf(logical_path, sizeof(logical_path),
-                     "FS/files/%s/%s/logical_blocks/%05d.dat",
-                     file_name, tag, last_index);
-            unlink(logical_path);
+            char* path = string_from_format("%s/%05d.dat", logical_path, last_index);
+            unlink(path);
 
             // Liberar del bitmap
-            mark_block_free(block_to_free);
+            if (block_to_free != 0) {
+                mark_block_free(block_to_free);
+            }
 
             // Quitar de metadata
-            list_remove(meta->blocks, last_index);
+            free(list_remove(meta->blocks, last_index));
 
-            log_info(logger_storage,
-                     "##TRUNCATE - Bloque liberado %d para %s:%s",
-                     block_to_free, file_name, tag);
+            log_info(logger_storage, "##TRUNCATE - Bloque liberado %d para %s:%s", block_to_free, file_name, tag);
         }
     }
 
@@ -218,7 +193,7 @@ int storage_truncate(const char* file_name, const char* tag, int new_size)
     return STORAGE_RESULT_OK;
 }
 
-int storage_write(const char* file_name, const char* tag, int offset, int size, const void* buffer)
+int storage_write(char* file_name, char* tag, int l_block_num, char* buffer)
 {
     t_metadata_file* meta = storage_metadata_read(file_name, tag);
     if (!meta)
@@ -235,55 +210,39 @@ int storage_write(const char* file_name, const char* tag, int offset, int size, 
         return STORAGE_RESULT_ERROR;
     }
 
-    // Calcula bloque inicial y posición interna
-    int current_offset = offset;
-    int remaining = size;
-    const char* data_ptr = (const char*)buffer;
+    int p_block_num = atoi(list_get(meta->blocks, l_block_num));
+    
+    char* phys_path = string_from_format("physical_blocks/block%04d.dat", p_block_num);
+    FILE* p_block = fopen(phys_path, "rb");
+    free(phys_path);
+    char* act_content = malloc(BLOCK_SIZE);
+    fread(act_content, BLOCK_SIZE, 1, p_block);
+    fclose(p_block);
+    // TODO: Check hash del nuevo y antiguo contenido, check links del bloque != 2 (si mismo y este archivo)
 
-    while (remaining > 0)
-    {
-        int block_index = current_offset / BLOCK_SIZE;
-        int block_offset = current_offset % BLOCK_SIZE;
-        int block_num = (int)(intptr_t)list_get(meta->blocks, block_index);
-        int to_write = BLOCK_SIZE - block_offset;
-        if (to_write > remaining) to_write = remaining;
+    // Caso lindo: solo se reasigna el bloque fisico y el anterior sigue igual (por ej, el bloque fisico 0 que es para los bloques vacios)
+    char* log_path = string_from_format("files/%s/%s/logical_blocks/%05d.dat", file_name, tag, l_block_num);
+    unlink(log_path);
+    int new_p_block_num = find_free_block();
+    list_replace_and_destroy_element(meta->blocks, l_block_num, string_itoa(new_p_block_num), free);
 
-        // Ruta física del bloque
-        char phys_path[256];
-        snprintf(phys_path, sizeof(phys_path), "FS/physical_blocks/block%04d.dat", block_num);
-
-        FILE* f = fopen(phys_path, "r+b");
-        if (!f)
-        {
-            log_error(logger_storage, "No se pudo abrir bloque físico %d (%s)", block_num, phys_path);
-            storage_metadata_destroy(meta);
-            return STORAGE_RESULT_ERROR;
-        }
-
-        fseek(f, block_offset, SEEK_SET);
-        fwrite(data_ptr, 1, to_write, f);
-        fflush(f);
-        fclose(f);
-
-        log_info(logger_storage, "WRITE -> bloque %d [%d bytes en offset %d]",
-                 block_num, to_write, block_offset);
-
-        current_offset += to_write;
-        data_ptr += to_write;
-        remaining -= to_write;
-    }
-
-    if (offset + size > meta->tamanio)
-        meta->tamanio = offset + size;
+    phys_path = string_from_format("physical_blocks/block%04d.dat", new_p_block_num);
+    p_block = fopen(phys_path, "wb");
+    fwrite(buffer, BLOCK_SIZE, 1, p_block);
+    fclose(p_block);
+    link(phys_path, log_path);
+    free(phys_path);
+    free(log_path);
 
     storage_metadata_write(file_name, tag, meta);
     storage_metadata_destroy(meta);
 
-    log_info(logger_storage, "WRITE completado en %s:%s (size=%d, offset=%d)", file_name, tag, size, offset);
+    log_info(logger_storage, "WRITE completado en %s:%s (B = %d)", file_name, tag, l_block_num);
     return STORAGE_RESULT_OK;
 }
 
-int storage_read(const char* file_name, const char* tag, int offset, int size, void* buffer)
+// el buffer ya debe tener un espacio de memoria asignado con un malloc(BLOCK_SIZE)
+int storage_read(char* file_name, char* tag, int l_block_num, char* buffer)
 {
     t_metadata_file* meta = storage_metadata_read(file_name, tag);
     if (!meta)
@@ -292,55 +251,21 @@ int storage_read(const char* file_name, const char* tag, int offset, int size, v
         return STORAGE_RESULT_ERROR;
     }
 
-    if (offset >= meta->tamanio)
+    if (l_block_num > list_size(meta->blocks))
     {
-        log_warning(logger_storage, "READ fuera de rango en %s:%s (offset=%d, tamanio=%d)",
-                    file_name, tag, offset, meta->tamanio);
+        log_warning(logger_storage, "READ fuera de rango en %s:%s (B = %d)", file_name, tag, l_block_num);
         storage_metadata_destroy(meta);
         return STORAGE_RESULT_ERROR;
     }
 
-    if (offset + size > meta->tamanio)
-        size = meta->tamanio - offset;
-
-    // Calcula bloque inicial y posición
-    int current_offset = offset;
-    int remaining = size;
-    char* data_ptr = (char*)buffer;
-
-    while (remaining > 0)
-    {
-        int block_index = current_offset / BLOCK_SIZE;
-        int block_offset = current_offset % BLOCK_SIZE;
-        int block_num = (int)(intptr_t)list_get(meta->blocks, block_index);
-        int to_read = BLOCK_SIZE - block_offset;
-        if (to_read > remaining) to_read = remaining;
-
-        // Ruta física del bloque
-        char phys_path[256];
-        snprintf(phys_path, sizeof(phys_path), "FS/physical_blocks/block%04d.dat", block_num);
-
-        FILE* f = fopen(phys_path, "rb");
-        if (!f)
-        {
-            log_error(logger_storage, "No se pudo abrir bloque físico %d para lectura (%s)", block_num, phys_path);
-            storage_metadata_destroy(meta);
-            return STORAGE_RESULT_ERROR;
-        }
-
-        fseek(f, block_offset, SEEK_SET);
-        fread(data_ptr, 1, to_read, f);
-        fclose(f);
-
-        log_info(logger_storage, "READ <- bloque %d [%d bytes desde offset %d]",
-                 block_num, to_read, block_offset);
-
-        current_offset += to_read;
-        data_ptr += to_read;
-        remaining -= to_read;
-    }
-
+    int p_block_num = atoi(list_get(meta->blocks, l_block_num));
     storage_metadata_destroy(meta);
-    log_info(logger_storage, "READ completado en %s:%s (offset=%d, size=%d)", file_name, tag, offset, size);
+
+    char* phys_path = string_from_format("physical_blocks/block%04d.dat", p_block_num);
+    FILE* p_block = fopen(phys_path, "rb");
+    fread(buffer, 1, BLOCK_SIZE, p_block);
+    fclose(p_block);
+
+    log_info(logger_storage, "READ completado en %s:%s (B = %d)", file_name, tag, l_block_num);
     return STORAGE_RESULT_OK;
 }

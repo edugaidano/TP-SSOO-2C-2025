@@ -3,6 +3,7 @@
 
 #include "storage_globals.h"
 #include <commons/config.h>
+#include <commons/string.h>
 #include <commons/collections/list.h>
 
 typedef struct {
@@ -12,7 +13,7 @@ typedef struct {
 } t_metadata_file;
 
 // Crea File:Tag
-int storage_create(const char* file_name, const char* tag);
+int storage_create(char* file_name, char* tag);
 
 // Metadata
 t_metadata_file* storage_metadata_read(const char* file_name, const char* tag);
@@ -21,7 +22,7 @@ void storage_metadata_destroy(t_metadata_file* metadata);
 
 // operaciones
 int storage_truncate(const char* file_name, const char* tag, int new_size);
-int storage_write(const char* file_name, const char* tag, int offset, int size, const void* buffer);
-int storage_read(const char* file_name, const char* tag, int offset, int size, void* buffer);
+int storage_write(char* file_name, char* tag, int l_block_num, char* buffer);
+int storage_read(char* file_name, char* tag, int l_block_num, char* buffer);
 
 #endif

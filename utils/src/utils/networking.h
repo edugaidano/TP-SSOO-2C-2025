@@ -23,8 +23,8 @@
 
 typedef enum resultado_t
 {
-    OK,
-    ERROR
+    ERROR = -1,
+    OK
 } resultado_t;
 
 /**
