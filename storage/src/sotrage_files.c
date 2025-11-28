@@ -196,6 +196,7 @@ rta_storage storage_truncate(const char* file_name, const char* tag, int new_siz
 
 rta_storage storage_write(char* file_name, char* tag, int l_block_num, char* buffer)
 {
+    usleep(RETARDO_ACCESO_BLOQUE * 1000);
     t_metadata_file* meta = storage_metadata_read(file_name, tag);
     if (!meta)
     {
@@ -254,6 +255,7 @@ rta_storage storage_write(char* file_name, char* tag, int l_block_num, char* buf
 // el buffer ya debe tener un espacio de memoria asignado con un malloc(BLOCK_SIZE)
 rta_storage storage_read(char* file_name, char* tag, int l_block_num, char* buffer)
 {
+    usleep(RETARDO_ACCESO_BLOQUE * 1000);
     t_metadata_file* meta = storage_metadata_read(file_name, tag);
     if (!meta)
     {

@@ -43,8 +43,6 @@ void *storage_worker_handler(void *arg)
         }
         case INFO_FILE_TAG_STORAGE:
         {
-            usleep(RETARDO_OPERACION * 1000);
-
             char* file = list_get(package, 0);
             char* tag = list_get(package, 1);
 
