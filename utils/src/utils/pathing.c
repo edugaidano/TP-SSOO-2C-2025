@@ -21,7 +21,7 @@ char *build_path(char *relative_path)
 char *build_config_path(char *file_name)
 {
     printf("nombre del config: %s\n", file_name);
-    char *relative_config_path = string_from_format("config/%s.conf", file_name);
+    char *relative_config_path = string_from_format("config/%s.config", file_name);
     printf("ruta relativa: %s\n", relative_config_path);
     char *config_path = build_path(relative_config_path);
     printf("ruta absoluta: %s\n", config_path);

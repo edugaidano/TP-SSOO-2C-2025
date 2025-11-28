@@ -3,7 +3,7 @@
 void init(char *config_name)
 {
     // storage.config
-    char *config_path = string_from_format("config/%s.conf",config_name);
+    char *config_path = string_from_format("config/%s.config",config_name);
     config_storage = config_create(config_path);
     if (!config_storage)
     {

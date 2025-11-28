@@ -2,7 +2,7 @@
 
 void init(char *config_name, char *query_name)
 {
-    char *config_path = string_from_format("config/%s.conf",config_name);
+    char *config_path = string_from_format("config/%s.config",config_name);
     config_query_control = config_create(config_path);
     
     if (!config_query_control)
