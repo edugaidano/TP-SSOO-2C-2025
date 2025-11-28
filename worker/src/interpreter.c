@@ -62,8 +62,6 @@ void interpretar_DELETE(t_instrucion* instruccion) {
 
 void interpretar_FLUSH(t_instrucion* instruccion) {
 
-    paquete_t* paquete = paquete_instruccion_storage(instruccion);
-
     // Busca el la Tabla de Paginas del FILE:TAG
     for (int i = 0; i < list_size(file_tag_pages); i++) {
         file_tag* ft = list_get(file_tag_pages, i);
@@ -72,16 +70,14 @@ void interpretar_FLUSH(t_instrucion* instruccion) {
             for (int j = 0; j < list_size(ft->tabla_paginas); j++) {
                 nodo_pagina* pagina = list_get(ft->tabla_paginas, j);
                 if (pagina->modificado && pagina->presencia) {
-                    agregar_a_paquete(paquete, &(pagina->nro_pagina), sizeof(int));
                     nodo_marco* n_marco = list_get(marco, pagina->nro_marco);
-                    agregar_a_paquete(paquete, n_marco->puntero_marco, tam_pagina);
+                    notificar_cambios(pagina, instruccion->datos[0], n_marco->puntero_marco, storage_socket);
+                    pagina->modificado = false;
                 }
             }
             break;
         }
     }
-    
-    enviar_paquete_a(paquete, storage_socket, "Storage", instruccion->identificador);
 }
 
 void interpretar_TRUNCATE(t_instrucion* instruccion) {

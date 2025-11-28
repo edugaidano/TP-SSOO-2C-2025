@@ -28,18 +28,6 @@ rta_storage desglozar_instruccion(t_list* pkg) {
         result = storage_delete(file, tag);
         break;
     }
-    case FLUSH:
-    {
-        int total_pagians = (list_size(pkg) - 3)/2;
-        for (int i = 0; i < total_pagians; i++) {
-            int nro_pagina = *(int*)list_get(pkg, i + 3);
-            char* data = (char*)list_get(pkg, i + 4);
-            int r = storage_write(file, tag, nro_pagina, data);
-            if (r != OP_EXITOSA) { return r; }
-        }
-        result = OP_EXITOSA;  
-        break;
-    }
     case TRUNCATE:
     {
         int size = *(int*)list_get(pkg, 3);

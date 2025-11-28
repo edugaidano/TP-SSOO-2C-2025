@@ -6,7 +6,6 @@ int actualizar_pagina (nodo_pagina* pagina, char* identificador);
 void check_file_tag (char* id_actual, char* id_nuevo);
 void log_reemplazo (char* identificador1,  char* identificador2, int nro_pagina1, int nro_pagina2);
 void mover_puntero_clock (int nro_marco);
-void notificar_cambios (nodo_pagina* victima, char* identificador, void* p_marco, int fd_storage);
 
 // Public Functions //
 
@@ -78,8 +77,6 @@ int algoritmo_CLOCK_M(char* id_nueva_pagina, int nro_nueva_pagina) {
     return nro_marco;
 }
 
-// Private Functions //
-
 void notificar_cambios(nodo_pagina* victima, char* identificador, void* p_marco, int fd_storage) {
 
     paquete_t* paquete = crear_paquete(MODIFICACIONES_STORAGE);
@@ -99,6 +96,9 @@ void notificar_cambios(nodo_pagina* victima, char* identificador, void* p_marco,
         exit(EXIT_FAILURE);
     }
 }
+
+// Private Functions //
+
 
 void check_file_tag (char* id_actual, char* id_nuevo) {
     file_tag* ft = file_tag_en_memoria(id_actual);
