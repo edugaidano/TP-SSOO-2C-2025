@@ -206,8 +206,7 @@ void *worker_handler(void *arg)
         }
         case INSTRUCCION_MASTER: // La unica es el EXIT, se podria hacer una verificacion con el contenido
         {
-            notificar_finalizacion(worker->query, FINALIZACION_CORRECTA);
-            worker->query->state = FINISHED;
+            finalizar_query(worker->query, FINALIZACION_CORRECTA);
             resultado_t result = OK;
             if (send(worker->socket, &result, sizeof(resultado_t), 0) <= 0) 
             {

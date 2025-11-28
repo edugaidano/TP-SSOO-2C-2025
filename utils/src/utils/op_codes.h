@@ -22,7 +22,8 @@ typedef enum opcodes
     QUERY_DESALOJADA,
     INFO_FILE_TAG_STORAGE,
     INFO_FILE_TAG_WORKER,
-    MODIFICACIONES_STORAGE
+    MODIFICACIONES_STORAGE,
+    RTA_STORAGE_WORKER
 } op_code;
 
 typedef enum rta_storage
@@ -31,7 +32,8 @@ typedef enum rta_storage
     OP_EXITOSA,
     ERR_INEXISTENCIA,           //File / Tag inexistente
     ERR_PREEXISTENCIA,          //File / Tag preexistente
-    ERR_PERMISOS_INSUFICIENTES, //Escritura no permitida
+    ERR_ESP_INSUFICIENTE,       // Espacio Insuficiente
+    ERR_WRITE_COMMITED,         //Escritura no permitida
     ERR_FUERA_LIMITE            //Lectura o escritura fuera de limite
 } rta_storage;
 

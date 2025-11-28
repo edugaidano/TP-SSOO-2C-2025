@@ -116,7 +116,13 @@ rta_storage storage_truncate(const char* file_name, const char* tag, int new_siz
     if (!meta)
     {
         log_error(logger_storage, "No se pudo leer metadata de %s:%s para TRUNCATE", file_name, tag);
-        return NOT_DEF_ERR;
+        return ERR_INEXISTENCIA;
+    }
+
+    if (string_equals_ignore_case(meta->estado, "COMMITED")) {
+        log_error(logger_storage, "TRUNCATE falló: %s:%s con estado COMMITED", file_name, tag);
+        storage_metadata_destroy(meta);
+        return ERR_WRITE_COMMITED;
     }
 
     // Calcular bloques 
@@ -194,13 +200,19 @@ rta_storage storage_write(char* file_name, char* tag, int l_block_num, char* buf
     if (!meta)
     {
         log_error(logger_storage, "No se pudo leer metadata para WRITE en %s:%s", file_name, tag);
-        return NOT_DEF_ERR;
+        return ERR_INEXISTENCIA;
+    }
+
+    if (string_equals_ignore_case(meta->estado, "COMMITED")) {
+        log_error(logger_storage, "WRITE falló: %s:%s con estado COMMITED", file_name, tag);
+        storage_metadata_destroy(meta);
+        return ERR_WRITE_COMMITED;
     }
 
     // Valid que haya bloques asignados
-    if (list_size(meta->blocks) == 0)
+    if (list_size(meta->blocks) < l_block_num)
     {
-        log_error(logger_storage, "WRITE falló: no hay bloques asignados en %s:%s", file_name, tag);
+        log_error(logger_storage, "WRITE falló: no existe el bloque %d en %s:%s", l_block_num, file_name, tag);
         storage_metadata_destroy(meta);
         return ERR_FUERA_LIMITE;
     }
@@ -216,6 +228,7 @@ rta_storage storage_write(char* file_name, char* tag, int l_block_num, char* buf
         free(phys_path);
         // Buscar nuevo bloque
         p_block_num = find_free_block();
+        if (p_block_num == -1) {return ERR_ESP_INSUFICIENTE; }
         // Reemplazar en config
         list_remove_and_destroy_element(meta->blocks, l_block_num, free);
         list_add_in_index(meta->blocks, l_block_num, string_itoa(p_block_num));
@@ -245,7 +258,7 @@ rta_storage storage_read(char* file_name, char* tag, int l_block_num, char* buff
     if (!meta)
     {
         log_error(logger_storage, "No se pudo leer metadata para READ en %s:%s", file_name, tag);
-        return NOT_DEF_ERR;
+        return ERR_INEXISTENCIA;
     }
 
     if (l_block_num > list_size(meta->blocks))
@@ -269,6 +282,11 @@ rta_storage storage_read(char* file_name, char* tag, int l_block_num, char* buff
 
 rta_storage storage_commit(char* file, char* tag) {
     t_metadata_file* metadata = storage_metadata_read(file, tag);
+    if (!metadata)
+    {
+        log_error(logger_storage, "No se pudo leer metadata para COMMIT en %s:%s", file, tag);
+        return ERR_INEXISTENCIA;
+    }
     free(metadata->estado);
     metadata->estado = string_duplicate("COMMITED");
     storage_metadata_write(file, tag, metadata);
@@ -302,6 +320,11 @@ rta_storage storage_tag(char* file_o, char* tag_o, char* file_n, char* tag_n) {
     if (result != OP_EXITOSA) {return result;}
 
     t_metadata_file* metadata_ft_o = storage_metadata_read(file_o, tag_o);
+    if (!metadata_ft_o)
+    {
+        log_error(logger_storage, "No se pudo leer metadata para TAG en %s:%s", file_o, tag_o);
+        return ERR_INEXISTENCIA;
+    }
     free(metadata_ft_o->estado);
     metadata_ft_o->estado = string_duplicate("WORK_IN_PROGRESS");
     storage_metadata_write(file_n, tag_n, metadata_ft_o);
@@ -327,7 +350,11 @@ rta_storage storage_tag(char* file_o, char* tag_o, char* file_n, char* tag_n) {
 
 rta_storage storage_delete(char* file, char* tag) {
     t_metadata_file* meta = storage_metadata_read(file, tag);
-
+    if (!meta)
+    {
+        log_error(logger_storage, "No se pudo leer metadata para DELETE en %s:%s", file, tag);
+        return ERR_INEXISTENCIA;
+    }
     int cant_blks = list_size(meta->blocks);
     char* log_path = string_from_format("files/%s/%s", file, tag);
     for (int i = 0; i < cant_blks; i++) {

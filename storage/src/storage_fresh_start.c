@@ -76,9 +76,6 @@ void storage_fresh_start()
         int block_fd = fileno(block); 
         ftruncate(block_fd, BLOCK_SIZE);
         fwrite(zero_block, BLOCK_SIZE, 1, block);
-        if (i == 0) {
-            // TODO: hash
-        }
         fclose(block);
 
     }    

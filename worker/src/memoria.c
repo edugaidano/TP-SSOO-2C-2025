@@ -275,6 +275,14 @@ nodo_pagina* solicitar_pagina(char* identificador, int nro_pagina) {
         exit(EXIT_FAILURE);
     }
     buffer_t* buffer = obtener_siguiente_item(paquete);
+    rta_storage rta = *(rta_storage*)buffer->stream;
+    free_buffer(buffer);
+    if (rta != OP_EXITOSA) {
+        log_error(logger_worker, "No se pudo realizar correctamente la solicitud de la pagina (%d)", rta);
+        destruir_paquete(paquete);
+        exit(EXIT_FAILURE);
+    }
+    
 
     int indice = marco_libre();
     if (indice == -1) {
@@ -287,6 +295,7 @@ nodo_pagina* solicitar_pagina(char* identificador, int nro_pagina) {
     pagina->nro_marco = indice;
     pagina->presencia = true;
 
+    buffer = obtener_siguiente_item(paquete);
     nodo_marco* n_marco = list_get(marco, indice);
     memcpy(n_marco->puntero_marco, buffer->stream, buffer->size);
     n_marco->identificador = ft->identificador;

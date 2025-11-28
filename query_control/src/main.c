@@ -79,6 +79,9 @@ void recibir_mensaje()
                     case ERR_DESC_WORKER:
                         log_info(logger_query_control, "## Query finalizada - La ejecución finalizó por desconexión del worker");
                         break;
+                    case ERR_STORAGE:
+                        log_info(logger_query_control, "## Query finalizada - La ejecución finalizó por un error del storage");
+                        break;
                     default:
                         log_warning(logger_query_control, "## Query finalizada - motivo desconocido o no definido correctamente");
                         break;

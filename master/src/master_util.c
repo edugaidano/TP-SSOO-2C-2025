@@ -18,12 +18,9 @@ void finalizar_query(query_t *query, razon_fin razon)
     case FINALIZACION_CORRECTA:
         log_info(logger_master, "## Se terminó la Query %d en el Worker %s", query->id, query->worker->id);
         break;
-    case ERR_DESC_WORKER:
-        log_info(logger_master, 
-            "## Se desconecta el Worker %s - Se finaliza la Query %d - Cantidad total de Workers: %d", 
-            query->worker->id, query->id, (list_size(workers) - 1));
-        break;
     default:
+        log_info(logger_master, "## Se desconecta el Worker %s - Se finaliza la Query %d - Cantidad total de Workers: %d", 
+            query->worker->id, query->id, (list_size(workers) - 1));
         break;
     }
 
@@ -79,10 +76,10 @@ void destruir_query(query_t *query)
 void notificar_finalizacion(query_t *query, razon_fin razon_enum)
 {
     int mensaje = NOTIF_FINAL;
-    int razon = razon_enum;
+
     paquete_t *paquete = crear_paquete(NOTIF_QUERY_CONTROL);
     agregar_a_paquete(paquete, &mensaje, sizeof(int));
-    agregar_a_paquete(paquete, &razon, sizeof(int));
+    agregar_a_paquete(paquete, &razon_enum, sizeof(razon_fin));
     enviar_paquete(query->socket, paquete, logger_master);
 }
 

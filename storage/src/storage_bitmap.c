@@ -69,7 +69,7 @@ int find_free_block(void)
     pthread_rwlock_unlock(&bitmap_lock);
 
     if (free_block == -1)
-        log_warning(logger_storage, "No hay bloques libres en el bitmap");
+        log_error(logger_storage, "No hay bloques libres en el bitmap");
 
     return free_block;
 }

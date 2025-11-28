@@ -2,7 +2,7 @@
 
 // Private Functions //
 
-void log_ejecucion(resultado_t resultado, char* instruccion);
+void log_ejecucion(int resultado, char* instruccion);
 void enviar_paquete_a(paquete_t* paquete, int fd, char* modulo, char* instruccion);
 void instruccion_simple_storage(t_instrucion* instruccion);
 paquete_t* paquete_instruccion_storage(t_instrucion* instruccion);
@@ -148,15 +148,22 @@ void interpretar_END(t_instrucion* instruccion) {
 
 // Private Functions //
 
-void log_ejecucion(resultado_t resultado, char* instruccion) {
+void log_ejecucion(int resultado, char* instruccion) {
     switch (resultado) {
         case OK:
             log_info(logger_worker, "## Query %s: - Instrucción realizada: %s", query_id, instruccion);
             break;
         case ERROR:
-            log_error(logger_worker, "Error al ejecutar instruccion %s", instruccion);
+        case ERR_INEXISTENCIA:
+        case ERR_PREEXISTENCIA:
+        case ERR_ESP_INSUFICIENTE:
+        case ERR_WRITE_COMMITED:
+        case ERR_FUERA_LIMITE:
+        {
+            log_error(logger_worker, "Error al ejecutar instruccion %s (%d)", instruccion, resultado);
             exit(EXIT_FAILURE);
             break;
+        }
         default:
             log_error(logger_worker, "No se reconoce el resultado al ejecutar instruccion %s (R = %d)", instruccion, resultado);
             exit(EXIT_FAILURE);
@@ -174,13 +181,25 @@ void enviar_paquete_a(paquete_t* paquete, int fd, char* modulo, char* instruccio
         exit(EXIT_FAILURE);
     }
 
-    resultado_t resultado;
-    if (recv(fd, &resultado, sizeof(resultado_t), MSG_WAITALL) <= 0) {
-        log_error(logger_worker, "Error o desconeccion en %s al recibir resultado de instruccion %s", modulo, instruccion);
-        exit(EXIT_FAILURE);
-    }
+    int nro_resultado;
+    if (string_equals_ignore_case(modulo, "Master")) {
+        resultado_t resultado;
+        if (recv(fd, &resultado, sizeof(resultado_t), MSG_WAITALL) <= 0) {
+            log_error(logger_worker, "Error o desconeccion en %s al recibir resultado de instruccion %s", modulo, instruccion);
+            exit(EXIT_FAILURE);
+        }
+        nro_resultado = (int)resultado;
 
-    log_ejecucion(resultado, instruccion);
+    } else { // case "Storage"
+        rta_storage resultado;
+        if (recv(fd, &resultado, sizeof(resultado_t), MSG_WAITALL) <= 0) {
+            log_error(logger_worker, "Error o desconeccion en %s al recibir resultado de instruccion %s", modulo, instruccion);
+            exit(EXIT_FAILURE);
+        }
+        nro_resultado = (int)resultado;
+    }
+    
+    log_ejecucion(nro_resultado, instruccion);
 }
 
 void instruccion_simple_storage(t_instrucion* instruccion) {

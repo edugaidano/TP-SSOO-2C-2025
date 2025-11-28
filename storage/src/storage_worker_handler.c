@@ -131,6 +131,7 @@ void *storage_worker_handler(void *arg)
             char* contenido = (char*)malloc(BLOCK_SIZE);
             rta_storage r = storage_read(file, tag, nro_pagina, contenido);
 
+            agregar_a_paquete(page_package, &r, sizeof(rta_storage));
             agregar_a_paquete(page_package, contenido, BLOCK_SIZE);
             enviar_paquete(socket, page_package, logger_storage);
             free(contenido);

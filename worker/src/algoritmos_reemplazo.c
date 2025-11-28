@@ -88,14 +88,14 @@ void notificar_cambios(nodo_pagina* victima, char* identificador, void* p_marco,
     agregar_a_paquete(paquete, p_marco, tam_pagina);                    // Contenido
     enviar_paquete(fd_storage, paquete, logger_worker);
 
-    resultado_t result;
-    if (recv(fd_storage, &result, sizeof(resultado_t), 0) <= 0) {
+    rta_storage result;
+    if (recv(fd_storage, &result, sizeof(rta_storage), 0) <= 0) {
         log_error(logger_worker, "Error o desconeccion en Storage al recibir un resultado");
         exit(EXIT_FAILURE);
     }
     
-    if (result == ERROR) {
-        log_error(logger_worker, "Error en Storage al realizar las modificaciones en %s", identificador);
+    if (result != OP_EXITOSA) {
+        log_error(logger_worker, "Error en Storage al realizar las modificaciones en %s (%d)", identificador, result);
         exit(EXIT_FAILURE);
     }
 }
