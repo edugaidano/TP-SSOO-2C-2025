@@ -101,7 +101,7 @@ void storage_fresh_start()
     FILE* meta = fopen("files/initial_file/BASE/metadata.config", "w");
     if (meta) {
         fprintf(meta, "TAMAÑO=0\n");
-        fprintf(meta, "BLOCKS=[]\n");
+        fprintf(meta, "BLOCKS=[0]\n");
         fprintf(meta, "ESTADO=WORK_IN_PROGRESS\n");
         fclose(meta);
     }

@@ -25,6 +25,16 @@ typedef enum opcodes
     MODIFICACIONES_STORAGE
 } op_code;
 
+typedef enum rta_storage
+{
+    NOT_DEF_ERR = -1,
+    OP_EXITOSA,
+    ERR_INEXISTENCIA,           //File / Tag inexistente
+    ERR_PREEXISTENCIA,          //File / Tag preexistente
+    ERR_PERMISOS_INSUFICIENTES, //Escritura no permitida
+    ERR_FUERA_LIMITE            //Lectura o escritura fuera de limite
+} rta_storage;
+
 typedef enum notif_query_control
 {
     NOTIF_READ,
@@ -34,7 +44,8 @@ typedef enum notif_query_control
 typedef enum razon_fin
 {
     FINALIZACION_CORRECTA,
-    ERR_DESC_WORKER
+    ERR_DESC_WORKER,
+    ERR_STORAGE
 } razon_fin;
 
 #endif

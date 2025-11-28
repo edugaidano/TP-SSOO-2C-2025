@@ -70,11 +70,11 @@ void *storage_worker_handler(void *arg)
         {
             usleep(RETARDO_OPERACION * 1000);
             pthread_mutex_lock(&fs_lock);
-            resultado_t result = desglozar_instruccion(package);
+            rta_storage result = desglozar_instruccion(package);
             pthread_mutex_unlock(&fs_lock);
 
             // enviar resultado al Worker
-            if (send(socket, &result, sizeof(resultado_t), 0) <= 0)
+            if (send(socket, &result, sizeof(rta_storage), 0) <= 0)
             {
                 log_error(logger_storage,
                           "Error o desconexión al enviar el resultado de la instrucción");
@@ -100,11 +100,11 @@ void *storage_worker_handler(void *arg)
 
             pthread_mutex_lock(&fs_lock);
             
-            resultado_t result = storage_write(file, tag, nro_pagina, contenido);
+            rta_storage result = storage_write(file, tag, nro_pagina, contenido);
 
             pthread_mutex_unlock(&fs_lock);
 
-            if (send(socket, &result, sizeof(resultado_t), 0) <= 0)
+            if (send(socket, &result, sizeof(rta_storage), 0) <= 0)
             {
                 log_error(logger_storage, "Error o desconexión al enviar el resultado de la instrucción");
                 close(socket);
@@ -129,7 +129,7 @@ void *storage_worker_handler(void *arg)
             paquete_t *page_package = crear_paquete(PAGINA_WORKER);
 
             char* contenido = (char*)malloc(BLOCK_SIZE);
-            resultado_t r = storage_read(file, tag, nro_pagina, contenido);
+            rta_storage r = storage_read(file, tag, nro_pagina, contenido);
 
             agregar_a_paquete(page_package, contenido, BLOCK_SIZE);
             enviar_paquete(socket, page_package, logger_storage);

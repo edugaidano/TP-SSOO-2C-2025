@@ -6,6 +6,6 @@
 #include "utils/paquetes.h"
 #include "utils/set_instrucciones.h"
 
-resultado_t desglozar_instruccion(t_list* pkg);
+rta_storage desglozar_instruccion(t_list* pkg);
 
 #endif // STORAGE_OPERACIONES_H
