@@ -25,22 +25,30 @@ void *storage_worker_handler(void *arg)
         {
         case HANDSHAKE_WORKER_STORAGE:
         {
+            // HANDSHAKE: no aplicar RETARDO_OPERACION
             id_worker = string_duplicate(list_get(package, 0));
-            CANT_WORKERS++;
 
+            // protege contador de workers
+            pthread_mutex_lock(&worker_count_mutex);
+            CANT_WORKERS++;
+            pthread_mutex_unlock(&worker_count_mutex);
+
+            // responder con BLOCK_SIZE
             send(socket, &BLOCK_SIZE, sizeof(int), 0);
 
             log_info(logger_storage,
-                     "##Se conecta el Worker %s - Cantidad de Workers: %d",
+                     "##Se conecta el Worker <%s> - Cantidad de Workers: <%d>",
                      id_worker, CANT_WORKERS);
             break;
         }
         case INFO_FILE_TAG_STORAGE:
         {
+            usleep(RETARDO_OPERACION * 1000);
+
             char* file = list_get(package, 0);
             char* tag = list_get(package, 1);
 
-            t_metadata_file* metadata = storage_metadata_read(file, tag); 
+            t_metadata_file* metadata = storage_metadata_read(file, tag);
             int size;
             if (metadata) {
                 size = metadata->tamanio;
@@ -54,51 +62,66 @@ void *storage_worker_handler(void *arg)
 
             enviar_paquete(socket, size_tag_file, logger_storage);
 
-            log_info(logger_storage, "El Worker %s Solicito informacion sobre %s:%s", id_worker, file, tag);
+            log_info(logger_storage, "El Worker %s - Solicito informacion sobre %s:%s (size=%d)", 
+                id_worker ? id_worker : "?", file, tag, size);
             break;
         }
         case INSTRUCCION_STORAGE:
         {
+            usleep(RETARDO_OPERACION * 1000);
+            pthread_mutex_lock(&fs_lock);
             resultado_t result = desglozar_instruccion(package);
+            pthread_mutex_unlock(&fs_lock);
 
+            // enviar resultado al Worker
             if (send(socket, &result, sizeof(resultado_t), 0) <= 0)
             {
                 log_error(logger_storage,
                           "Error o desconexión al enviar el resultado de la instrucción");
                 close(socket);
+                // limpiar paquete antes de salir
+                list_destroy_and_destroy_elements(package, free);
+                if (id_worker) free(id_worker);
                 return NULL;
             }
 
-            log_info(logger_storage,
-                     "##Worker <%s> - Operación recibida: INSTRUCCION_STORAGE - Resultado: %d",
-                     id_worker, result);
+            log_info(logger_storage, "##Worker %s - Operación recibida: INSTRUCCION_STORAGE - Resultado: %d",
+                id_worker ? id_worker : "?", result);
             break;
         }
         case MODIFICACIONES_STORAGE:
         {
+            usleep(RETARDO_OPERACION * 1000);
+
             char* file = list_get(package, 0);
             char* tag = list_get(package, 1);
             int nro_pagina = *(int*)list_get(package, 2);
             char* contenido = list_get(package, 3);
+
+            pthread_mutex_lock(&fs_lock);
             
             resultado_t result = storage_write(file, tag, nro_pagina, contenido);
 
-            // Envia resultado fijo
+            pthread_mutex_unlock(&fs_lock);
+
             if (send(socket, &result, sizeof(resultado_t), 0) <= 0)
             {
-                log_error(logger_storage,
-                          "Error o desconexión al enviar el resultado de la instrucción");
+                log_error(logger_storage, "Error o desconexión al enviar el resultado de la instrucción");
                 close(socket);
+                list_destroy_and_destroy_elements(package, free);
+                if (id_worker) free(id_worker);
                 return NULL;
             }
 
             log_info(logger_storage,
-                     "Worker <%s> - Modificaciones realizadas sobre %s:%s en la pagina %d",
-                     id_worker, file, tag, nro_pagina);
+                     "##Worker %s - Modificaciones realizadas sobre %s:%s pagina %d - Resultado: %d",
+                     id_worker ? id_worker : "?", file, tag, nro_pagina, result);
             break;
         }
         case SOLICITUD_STORAGE:
         {
+            usleep(RETARDO_OPERACION * 1000);
+
             char* file = list_get(package, 0);
             char* tag = list_get(package, 1);
             int nro_pagina = *(int*)list_get(package, 2);
@@ -112,18 +135,24 @@ void *storage_worker_handler(void *arg)
             enviar_paquete(socket, page_package, logger_storage);
             free(contenido);
 
-            log_info(logger_storage,
-                     "##Worker <%s> - Se envio el contenido de %s:%s - %d",
-                     id_worker, file, tag, nro_pagina);
+            log_info(logger_storage, "##Worker %s - Se envio el contenido de %s:%s - %d- pagina %d (resultado=%d)",
+                id_worker ? id_worker : "?", file, tag, nro_pagina, r);
             break;
         }
         case DESCONEXION:
         {
+            // decrementar contador de workers protegido
+            pthread_mutex_lock(&worker_count_mutex);
             CANT_WORKERS--;
+            pthread_mutex_unlock(&worker_count_mutex);
+
             log_info(logger_storage,
-                     "##Se desconecta el Worker %s - Cantidad de Workers: %d",
-                     id_worker, CANT_WORKERS);
+                     "##Se desconecta el Worker <%s> - Cantidad de Workers: <%d>",
+                     id_worker ? id_worker : "?", CANT_WORKERS);
             close(socket);
+            // limpiar paquete
+            list_destroy_and_destroy_elements(package, free);
+            if (id_worker) free(id_worker);
             return NULL;
         }
         default:

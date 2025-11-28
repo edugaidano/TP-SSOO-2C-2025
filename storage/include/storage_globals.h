@@ -3,6 +3,7 @@
 
 #include <commons/log.h>
 #include <commons/config.h>
+#include <pthread.h>
 
 extern t_log *logger_storage;
 
@@ -18,6 +19,9 @@ extern int RETARDO_ACCESO_BLOQUE;
 extern int FS_SIZE;
 extern int BLOCK_SIZE;
 extern int CANT_WORKERS;
+
+extern pthread_mutex_t fs_lock;               // mutex global del FS
+extern pthread_mutex_t worker_count_mutex;    // para CANT_WORKERS
 
 // Códigos de resultado fijos
 #define STORAGE_RESULT_OK 0
