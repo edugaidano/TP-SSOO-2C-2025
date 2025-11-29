@@ -50,7 +50,7 @@ void bitmap_destroy(void)
     }
 }
 
-int find_free_block(void)
+int find_free_block()
 {
     pthread_rwlock_wrlock(&bitmap_lock);
     int free_block = -1;
@@ -82,10 +82,11 @@ void mark_block_used(int block_num)
     pthread_rwlock_unlock(&bitmap_lock);
 }
 
-void mark_block_free(int block_num)
+void mark_block_free(int block_num, char* query_id)
 {
     pthread_rwlock_wrlock(&bitmap_lock);
     bitarray_clean_bit(bitmap, block_num);
     msync(bitmap_data, bitmap_size, MS_SYNC);
     pthread_rwlock_unlock(&bitmap_lock);
+    log_info(logger_storage, "## %s - Bloque Físico Liberado - Número de Bloque: %d", query_id, block_num);
 }

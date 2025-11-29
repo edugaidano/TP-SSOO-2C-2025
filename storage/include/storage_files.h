@@ -20,7 +20,7 @@ typedef struct {
 } t_metadata_file;
 
 // Crea File:Tag
-rta_storage storage_create(char* file_name, char* tag);
+rta_storage storage_create(char* file_name, char* tag, char* query_id);
 
 // Metadata
 t_metadata_file* storage_metadata_read(const char* file_name, const char* tag);
@@ -28,11 +28,11 @@ void storage_metadata_write(const char* file_name, const char* tag, t_metadata_f
 void storage_metadata_destroy(t_metadata_file* metadata);
 
 // operaciones
-rta_storage storage_truncate(const char* file_name, const char* tag, int new_size);
-rta_storage storage_write(char* file_name, char* tag, int l_block_num, char* buffer);
-rta_storage storage_read(char* file_name, char* tag, int l_block_num, char* buffer);
-rta_storage storage_commit(char* file, char* tag);
-rta_storage storage_tag(char* file_o, char* tag_o, char* file_n, char* tag_n);
-rta_storage storage_delete(char* file, char* tag);
+rta_storage storage_truncate(const char* file_name, const char* tag, int new_size, char* query_id);
+rta_storage storage_write(char* file_name, char* tag, int l_block_num, char* buffer, char* query_id);
+rta_storage storage_read(char* file_name, char* tag, int l_block_num, char* buffer, char* query_id);
+rta_storage storage_commit(char* file, char* tag, char* query_id);
+rta_storage storage_tag(char* file_o, char* tag_o, char* file_n, char* tag_n, char* query_id);
+rta_storage storage_delete(char* file, char* tag, char* query_id);
 
 #endif

@@ -1,7 +1,7 @@
 #include "storage_files.h"
 
 // Crea un nuevo File:Tag en el FS
-rta_storage storage_create(char* file_name, char* tag)
+rta_storage storage_create(char* file_name, char* tag, char* query_id)
 {
     char* path = string_from_format("%s/files/%s", PUNTO_MONTAJE, file_name);
     mkdir(path, 0777);
@@ -30,7 +30,7 @@ rta_storage storage_create(char* file_name, char* tag)
     fprintf(meta, "TAMAÑO=0\nBLOCKS=[]\nESTADO=WORK_IN_PROGRESS\n");
     fclose(meta);
 
-    log_info(logger_storage, "##CREATE - File:%s Tag:%s creado correctamente", file_name, tag);
+    log_info(logger_storage, "## %s - File Creado %s:%s", query_id, file_name, tag);
     return OP_EXITOSA;
 }
 
@@ -110,7 +110,7 @@ void storage_metadata_destroy(t_metadata_file* metadata)
     free(metadata);
 }
 
-rta_storage storage_truncate(const char* file_name, const char* tag, int new_size)
+rta_storage storage_truncate(const char* file_name, const char* tag, int new_size, char* query_id)
 {
     t_metadata_file* meta = storage_metadata_read(file_name, tag);
     if (!meta)
@@ -130,7 +130,7 @@ rta_storage storage_truncate(const char* file_name, const char* tag, int new_siz
     int needed_blocks = new_size / BLOCK_SIZE;
 
     log_info(logger_storage,
-             "##TRUNCATE - %s:%s Tamaño actual=%d (%d bloques) -> Nuevo tamaño=%d (%d bloques)",
+             "TRUNCATE - %s:%s Tamaño actual=%d (%d bloques) -> Nuevo tamaño=%d (%d bloques)",
              file_name, tag, meta->tamanio, current_blocks, new_size, needed_blocks);
 
     
@@ -143,6 +143,9 @@ rta_storage storage_truncate(const char* file_name, const char* tag, int new_siz
             char* path = string_from_format("%s/%05d.dat", logical_path, list_size(meta->blocks));
             link("physical_blocks/block0000.dat", path);
             free(path);
+            log_info(logger_storage, 
+                "## %s - %s:%s Se agregó el hard link del bloque lógico %05d al bloque 0000",
+                query_id, file_name, tag, list_size(meta->blocks));
 
             // Agrega el bloque a metadata
             list_add(meta->blocks, string_duplicate("0"));
@@ -174,7 +177,7 @@ rta_storage storage_truncate(const char* file_name, const char* tag, int new_siz
                 stat(path, &blk_stat);
                 if (blk_stat.st_nlink == 1)
                 {
-                    mark_block_free(block_to_free);
+                    mark_block_free(block_to_free, query_id);
                     unlink(path);
                 }
                 free(path);
@@ -191,10 +194,11 @@ rta_storage storage_truncate(const char* file_name, const char* tag, int new_siz
     storage_metadata_write(file_name, tag, meta);
 
     storage_metadata_destroy(meta);
+    log_info(logger_storage, "## %s - File Truncado %s:%s - Tamaño: %d", query_id, file_name, tag, new_size);
     return OP_EXITOSA;
 }
 
-rta_storage storage_write(char* file_name, char* tag, int l_block_num, char* buffer)
+rta_storage storage_write(char* file_name, char* tag, int l_block_num, char* buffer, char* query_id)
 {
     usleep(RETARDO_ACCESO_BLOQUE * 1000);
     t_metadata_file* meta = storage_metadata_read(file_name, tag);
@@ -229,7 +233,12 @@ rta_storage storage_write(char* file_name, char* tag, int l_block_num, char* buf
         free(phys_path);
         // Buscar nuevo bloque
         p_block_num = find_free_block();
-        if (p_block_num == -1) {return ERR_ESP_INSUFICIENTE; }
+        if (p_block_num == -1) {
+            return ERR_ESP_INSUFICIENTE; 
+        } else {
+            log_info(logger_storage, "## %s - Bloque Físico Reservado - Número de Bloque: %d",
+                query_id, p_block_num);
+        }
         // Reemplazar en config
         list_remove_and_destroy_element(meta->blocks, l_block_num, free);
         list_add_in_index(meta->blocks, l_block_num, string_itoa(p_block_num));
@@ -239,6 +248,9 @@ rta_storage storage_write(char* file_name, char* tag, int l_block_num, char* buf
         unlink(log_path);
         phys_path = string_from_format("physical_blocks/block%04d.dat", p_block_num);
         link(phys_path, log_path);
+        log_info(logger_storage, 
+            "## %s - %s:%s Se agregó el hard link del bloque lógico %05d al bloque %04d",
+            query_id, file_name, tag, l_block_num, p_block_num);
     }
     
     storage_metadata_destroy(meta);
@@ -248,12 +260,13 @@ rta_storage storage_write(char* file_name, char* tag, int l_block_num, char* buf
     fclose(p_block);
     free(phys_path);
 
-    log_info(logger_storage, "WRITE completado en %s:%s (B = %d)", file_name, tag, l_block_num);
+    log_info(logger_storage, "## %s - Bloque Lógico Escrito %s:%s - Número de Bloque: %d", 
+        query_id, file_name, tag, l_block_num);
     return OP_EXITOSA;
 }
 
 // el buffer ya debe tener un espacio de memoria asignado con un malloc(BLOCK_SIZE)
-rta_storage storage_read(char* file_name, char* tag, int l_block_num, char* buffer)
+rta_storage storage_read(char* file_name, char* tag, int l_block_num, char* buffer, char* query_id)
 {
     usleep(RETARDO_ACCESO_BLOQUE * 1000);
     t_metadata_file* meta = storage_metadata_read(file_name, tag);
@@ -265,7 +278,7 @@ rta_storage storage_read(char* file_name, char* tag, int l_block_num, char* buff
 
     if (l_block_num > list_size(meta->blocks))
     {
-        log_warning(logger_storage, "READ fuera de rango en %s:%s (B = %d)", file_name, tag, l_block_num);
+        log_error(logger_storage, "READ fuera de rango en %s:%s (B = %d)", file_name, tag, l_block_num);
         storage_metadata_destroy(meta);
         return ERR_FUERA_LIMITE;
     }
@@ -278,11 +291,12 @@ rta_storage storage_read(char* file_name, char* tag, int l_block_num, char* buff
     fread(buffer, 1, BLOCK_SIZE, p_block);
     fclose(p_block);
 
-    log_info(logger_storage, "READ completado en %s:%s (B = %d)", file_name, tag, l_block_num);
+    log_info(logger_storage, "## %s - Bloque Lógico Leído %s:%s - Número de Bloque: %d",
+        query_id, file_name, tag, l_block_num);
     return OP_EXITOSA;
 }
 
-rta_storage storage_commit(char* file, char* tag) {
+rta_storage storage_commit(char* file, char* tag, char* query_id) {
     t_metadata_file* metadata = storage_metadata_read(file, tag);
     if (!metadata)
     {
@@ -305,20 +319,30 @@ rta_storage storage_commit(char* file, char* tag) {
             unlink(log_path);
             link(phys_path, log_path);
             free(phys_path);
-            mark_block_free(actual_blk);
+
+            log_info(logger_storage, 
+                "## %s - %s:%s Se agregó el hard link del bloque lógico %05d al bloque %s",
+                query_id, file, tag, i, phys_blk + 5);
+
+            mark_block_free(actual_blk, query_id);
             list_remove_and_destroy_element(metadata->blocks, i, free);
             list_add_in_index(metadata->blocks, i, string_itoa(atoi(phys_blk + 5))); // atoi -> itoa para tener un %d y no un %04d 
             storage_metadata_write(file, tag, metadata);
+
+            log_info(logger_storage, 
+                "## %s - %s:%s Bloque Lógico %5d se reasigna de %4d a %s",
+                query_id, file, tag, i, actual_blk, phys_blk + 5);
         } else {
             load_hash_in_index(hash, actual_blk);
         }
     }
     storage_metadata_destroy(metadata);
+    log_info(logger_storage, "## %s - Commit de File:Tag %s:%s", query_id, file, tag);
     return OP_EXITOSA;
 }
 
-rta_storage storage_tag(char* file_o, char* tag_o, char* file_n, char* tag_n) {
-    rta_storage result = storage_create(file_n, tag_n);
+rta_storage storage_tag(char* file_o, char* tag_o, char* file_n, char* tag_n, char* query_id) {
+    rta_storage result = storage_create(file_n, tag_n, query_id);
     if (result != OP_EXITOSA) {return result;}
 
     t_metadata_file* metadata_ft_o = storage_metadata_read(file_o, tag_o);
@@ -342,15 +366,19 @@ rta_storage storage_tag(char* file_o, char* tag_o, char* file_n, char* tag_n) {
         if (r != 0) { 
             log_error(logger_storage, "no se pudo hacer el link() durante una instruccion TAG");
             return NOT_DEF_ERR;
+        } else {
+            log_info(logger_storage, 
+                "## %s - %s:%s Se agregó el hard link del bloque lógico %05d al bloque %04d",
+                query_id, file_n, tag_n, i, blk_num);
         }
     }
 
     storage_metadata_destroy(metadata_ft_o);
-
+    log_info(logger_storage, "## %s - Tag creado %s:%s", query_id, file_n, tag_n);
     return OP_EXITOSA;
 }
 
-rta_storage storage_delete(char* file, char* tag) {
+rta_storage storage_delete(char* file, char* tag, char* query_id) {
     t_metadata_file* meta = storage_metadata_read(file, tag);
     if (!meta)
     {
@@ -377,7 +405,7 @@ rta_storage storage_delete(char* file, char* tag) {
         
         if (blk_stat.st_nlink < 2) {
             unlink(phys_path);
-            mark_block_free(blk_num);
+            mark_block_free(blk_num, query_id);
         }
         free(phys_path);
     }
@@ -393,6 +421,8 @@ rta_storage storage_delete(char* file, char* tag) {
     
     rmdir(log_path);
     free(log_path);
+
+    log_info(logger_storage, "## %s - Tag Eliminado %s:%s", query_id, file, tag);
 
     return OP_EXITOSA;
 }

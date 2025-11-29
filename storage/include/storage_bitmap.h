@@ -24,6 +24,6 @@ int find_free_block(void);
 void mark_block_used(int block_num);
 
 // Marca un bloque como libre
-void mark_block_free(int block_num);
+void mark_block_free(int block_num, char* query_id);
 
 #endif // STORAGE_BITMAP_H

@@ -207,5 +207,6 @@ paquete_t* paquete_instruccion_storage(t_instrucion* instruccion) {
     paquete_t* paquete = crear_paquete(INSTRUCCION_STORAGE);
     agregar_a_paquete(paquete, &(instruccion->copi), sizeof(set_instrucciones));     // COPI
     agregar_file_tag(paquete, instruccion->datos[0]);
+    agregar_a_paquete(paquete, query_id, string_length(query_id) + 1);               // Query ID
     return paquete;
 }

@@ -36,9 +36,7 @@ void *storage_worker_handler(void *arg)
             // responder con BLOCK_SIZE
             send(socket, &BLOCK_SIZE, sizeof(int), 0);
 
-            log_info(logger_storage,
-                     "##Se conecta el Worker <%s> - Cantidad de Workers: <%d>",
-                     id_worker, CANT_WORKERS);
+            log_info(logger_storage, "##Se conecta el Worker %s - Cantidad de Workers: %d", id_worker, CANT_WORKERS);
             break;
         }
         case INFO_FILE_TAG_STORAGE:
@@ -83,8 +81,6 @@ void *storage_worker_handler(void *arg)
                 return NULL;
             }
 
-            log_info(logger_storage, "##Worker %s - Operación recibida: INSTRUCCION_STORAGE - Resultado: %d",
-                id_worker ? id_worker : "?", result);
             break;
         }
         case MODIFICACIONES_STORAGE:
@@ -95,10 +91,11 @@ void *storage_worker_handler(void *arg)
             char* tag = list_get(package, 1);
             int nro_pagina = *(int*)list_get(package, 2);
             char* contenido = list_get(package, 3);
+            char* query_id = list_get(package, 4);
 
             pthread_mutex_lock(&fs_lock);
             
-            rta_storage result = storage_write(file, tag, nro_pagina, contenido);
+            rta_storage result = storage_write(file, tag, nro_pagina, contenido, query_id);
 
             pthread_mutex_unlock(&fs_lock);
 
@@ -111,9 +108,6 @@ void *storage_worker_handler(void *arg)
                 return NULL;
             }
 
-            log_info(logger_storage,
-                     "##Worker %s - Modificaciones realizadas sobre %s:%s pagina %d - Resultado: %d",
-                     id_worker ? id_worker : "?", file, tag, nro_pagina, result);
             break;
         }
         case SOLICITUD_STORAGE:
@@ -123,19 +117,18 @@ void *storage_worker_handler(void *arg)
             char* file = list_get(package, 0);
             char* tag = list_get(package, 1);
             int nro_pagina = *(int*)list_get(package, 2);
+            char* query_id = (char*)list_get(package, 3);
 
             paquete_t *page_package = crear_paquete(PAGINA_WORKER);
 
             char* contenido = (char*)malloc(BLOCK_SIZE);
-            rta_storage r = storage_read(file, tag, nro_pagina, contenido);
+            rta_storage r = storage_read(file, tag, nro_pagina, contenido, query_id);
 
             agregar_a_paquete(page_package, &r, sizeof(rta_storage));
             agregar_a_paquete(page_package, contenido, BLOCK_SIZE);
             enviar_paquete(socket, page_package, logger_storage);
             free(contenido);
 
-            log_info(logger_storage, "##Worker %s - Se envio el contenido de %s:%s - %d- pagina %d (resultado=%d)",
-                id_worker ? id_worker : "?", file, tag, nro_pagina, r);
             break;
         }
         case DESCONEXION:
@@ -145,9 +138,8 @@ void *storage_worker_handler(void *arg)
             CANT_WORKERS--;
             pthread_mutex_unlock(&worker_count_mutex);
 
-            log_info(logger_storage,
-                     "##Se desconecta el Worker <%s> - Cantidad de Workers: <%d>",
-                     id_worker ? id_worker : "?", CANT_WORKERS);
+            log_info(logger_storage, "##Se desconecta el Worker <%s> - Cantidad de Workers: <%d>", 
+                id_worker ? id_worker : "?", CANT_WORKERS);
             close(socket);
             // limpiar paquete
             list_destroy_and_destroy_elements(package, free);

@@ -266,6 +266,7 @@ nodo_pagina* solicitar_pagina(char* identificador, int nro_pagina) {
     paquete_t* paquete = crear_paquete(SOLICITUD_STORAGE);
     agregar_file_tag(paquete, identificador);
     agregar_a_paquete(paquete, &nro_pagina, sizeof(int));                           // Nro_Pagina
+    agregar_a_paquete(paquete, query_id, string_length(query_id) + 1);              // Query ID
     enviar_paquete(storage_socket, paquete, logger_worker);
 
     paquete = recibir_paquete(storage_socket, logger_worker); // Paquete: Informacion de la Pagina
