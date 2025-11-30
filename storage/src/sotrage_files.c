@@ -30,6 +30,7 @@ rta_storage storage_create(char* file_name, char* tag, char* query_id)
     fprintf(meta, "TAMAÑO=0\nBLOCKS=[]\nESTADO=WORK_IN_PROGRESS\n");
     fclose(meta);
 
+    add_lock(file_name, tag);
     log_info(logger_storage, "## %s - File Creado %s:%s", query_id, file_name, tag);
     return OP_EXITOSA;
 }
@@ -110,16 +111,19 @@ void storage_metadata_destroy(t_metadata_file* metadata)
     free(metadata);
 }
 
-rta_storage storage_truncate(const char* file_name, const char* tag, int new_size, char* query_id)
+rta_storage storage_truncate(char* file_name, char* tag, int new_size, char* query_id)
 {
+    storage_wait(file_name, tag);
     t_metadata_file* meta = storage_metadata_read(file_name, tag);
     if (!meta)
     {
+        storage_signal(file_name, tag);
         log_error(logger_storage, "No se pudo leer metadata de %s:%s para TRUNCATE", file_name, tag);
         return ERR_INEXISTENCIA;
     }
-
+    
     if (string_equals_ignore_case(meta->estado, "COMMITED")) {
+        storage_signal(file_name, tag);
         log_error(logger_storage, "TRUNCATE falló: %s:%s con estado COMMITED", file_name, tag);
         storage_metadata_destroy(meta);
         return ERR_WRITE_COMMITED;
@@ -175,10 +179,9 @@ rta_storage storage_truncate(const char* file_name, const char* tag, int new_siz
                 struct stat blk_stat;
                 path = string_from_format("physical_blocks/block%04d.dat", block_to_free);
                 stat(path, &blk_stat);
-                if (blk_stat.st_nlink == 1)
+                if (blk_stat.st_nlink < 2)
                 {
                     mark_block_free(block_to_free, query_id);
-                    unlink(path);
                 }
                 free(path);
             }
@@ -192,6 +195,8 @@ rta_storage storage_truncate(const char* file_name, const char* tag, int new_siz
 
     meta->tamanio = new_size;
     storage_metadata_write(file_name, tag, meta);
+    storage_signal(file_name, tag);
+    
 
     storage_metadata_destroy(meta);
     log_info(logger_storage, "## %s - File Truncado %s:%s - Tamaño: %d", query_id, file_name, tag, new_size);
@@ -201,22 +206,26 @@ rta_storage storage_truncate(const char* file_name, const char* tag, int new_siz
 rta_storage storage_write(char* file_name, char* tag, int l_block_num, char* buffer, char* query_id)
 {
     usleep(RETARDO_ACCESO_BLOQUE * 1000);
+    storage_wait(file_name, tag);
     t_metadata_file* meta = storage_metadata_read(file_name, tag);
     if (!meta)
     {
+        storage_signal(file_name, tag);
         log_error(logger_storage, "No se pudo leer metadata para WRITE en %s:%s", file_name, tag);
         return ERR_INEXISTENCIA;
     }
-
+    
     if (string_equals_ignore_case(meta->estado, "COMMITED")) {
+        storage_signal(file_name, tag);
         log_error(logger_storage, "WRITE falló: %s:%s con estado COMMITED", file_name, tag);
         storage_metadata_destroy(meta);
         return ERR_WRITE_COMMITED;
     }
-
+    
     // Valid que haya bloques asignados
     if (list_size(meta->blocks) < l_block_num)
     {
+        storage_signal(file_name, tag);
         log_error(logger_storage, "WRITE falló: no existe el bloque %d en %s:%s", l_block_num, file_name, tag);
         storage_metadata_destroy(meta);
         return ERR_FUERA_LIMITE;
@@ -234,15 +243,19 @@ rta_storage storage_write(char* file_name, char* tag, int l_block_num, char* buf
         // Buscar nuevo bloque
         p_block_num = find_free_block();
         if (p_block_num == -1) {
+            storage_signal(file_name, tag);
+            storage_metadata_destroy(meta);
             return ERR_ESP_INSUFICIENTE; 
         } else {
             log_info(logger_storage, "## %s - Bloque Físico Reservado - Número de Bloque: %d",
                 query_id, p_block_num);
         }
+
         // Reemplazar en config
         list_remove_and_destroy_element(meta->blocks, l_block_num, free);
         list_add_in_index(meta->blocks, l_block_num, string_itoa(p_block_num));
         storage_metadata_write(file_name, tag, meta);
+
         // linkear nuevo bloque
         char* log_path = string_from_format("files/%s/%s/logical_blocks/%05d.dat", file_name, tag, l_block_num);
         unlink(log_path);
@@ -253,8 +266,10 @@ rta_storage storage_write(char* file_name, char* tag, int l_block_num, char* buf
             query_id, file_name, tag, l_block_num, p_block_num);
     }
     
+    storage_signal(file_name, tag);
     storage_metadata_destroy(meta);
 
+    // TODO sem para bloques fisicos
     FILE* p_block = fopen(phys_path, "wb");
     fwrite(buffer, BLOCK_SIZE, 1, p_block);
     fclose(p_block);
@@ -269,21 +284,25 @@ rta_storage storage_write(char* file_name, char* tag, int l_block_num, char* buf
 rta_storage storage_read(char* file_name, char* tag, int l_block_num, char* buffer, char* query_id)
 {
     usleep(RETARDO_ACCESO_BLOQUE * 1000);
+    storage_wait(file_name, tag);
     t_metadata_file* meta = storage_metadata_read(file_name, tag);
     if (!meta)
     {
+        storage_signal(file_name, tag);
         log_error(logger_storage, "No se pudo leer metadata para READ en %s:%s", file_name, tag);
         return ERR_INEXISTENCIA;
     }
 
     if (l_block_num > list_size(meta->blocks))
     {
+        storage_signal(file_name, tag);
         log_error(logger_storage, "READ fuera de rango en %s:%s (B = %d)", file_name, tag, l_block_num);
         storage_metadata_destroy(meta);
         return ERR_FUERA_LIMITE;
     }
 
     int p_block_num = atoi(list_get(meta->blocks, l_block_num));
+    storage_signal(file_name, tag);
     storage_metadata_destroy(meta);
 
     char* phys_path = string_from_format("physical_blocks/block%04d.dat", p_block_num);
@@ -297,9 +316,11 @@ rta_storage storage_read(char* file_name, char* tag, int l_block_num, char* buff
 }
 
 rta_storage storage_commit(char* file, char* tag, char* query_id) {
+    storage_wait(file, tag);
     t_metadata_file* metadata = storage_metadata_read(file, tag);
     if (!metadata)
     {
+        storage_signal(file, tag);
         log_error(logger_storage, "No se pudo leer metadata para COMMIT en %s:%s", file, tag);
         return ERR_INEXISTENCIA;
     }
@@ -310,32 +331,41 @@ rta_storage storage_commit(char* file, char* tag, char* query_id) {
     // check hashes
     int cant_blks = list_size(metadata->blocks);
     for (int i = 0; i < cant_blks; i++) {
+
         char* log_path = string_from_format("files/%s/%s/logical_blocks/%05d.dat", file, tag, i);
         char* hash = get_hash_from_block(file, tag, i);
+
         int actual_blk = atoi(list_get(metadata->blocks, i));
-        if (hash_is_loaded(hash)) {
-            char* phys_blk = block_asocied_to(hash);
-            char* phys_path = string_from_format("physical_blocks/%s.dat", phys_blk);
-            unlink(log_path);
-            link(phys_path, log_path);
-            free(phys_path);
 
-            log_info(logger_storage, 
-                "## %s - %s:%s Se agregó el hard link del bloque lógico %05d al bloque %s",
-                query_id, file, tag, i, phys_blk + 5);
-
-            mark_block_free(actual_blk, query_id);
-            list_remove_and_destroy_element(metadata->blocks, i, free);
-            list_add_in_index(metadata->blocks, i, string_itoa(atoi(phys_blk + 5))); // atoi -> itoa para tener un %d y no un %04d 
-            storage_metadata_write(file, tag, metadata);
-
-            log_info(logger_storage, 
-                "## %s - %s:%s Bloque Lógico %5d se reasigna de %4d a %s",
-                query_id, file, tag, i, actual_blk, phys_blk + 5);
-        } else {
+        char* phys_blk = block_asocied_to(hash);
+        if (!phys_blk) {
             load_hash_in_index(hash, actual_blk);
+            continue;
         }
+        
+        char* phys_path = string_from_format("physical_blocks/%s.dat", phys_blk);
+
+        unlink(log_path);
+        link(phys_path, log_path);
+
+        free(phys_path);
+        
+        log_info(logger_storage, "## %s - %s:%s Se agregó el hard link del bloque lógico %05d al bloque %s",
+            query_id, file, tag, i, phys_blk + 5);
+
+        mark_block_free(actual_blk, query_id);
+        list_remove_and_destroy_element(metadata->blocks, i, free);
+        list_add_in_index(metadata->blocks, i, string_itoa(atoi(phys_blk + 5))); // atoi -> itoa para tener un %d y no un %04d 
+
+        storage_metadata_write(file, tag, metadata);
+
+        log_info(logger_storage, "## %s - %s:%s Bloque Lógico %5d se reasigna de %4d a %s",
+            query_id, file, tag, i, actual_blk, phys_blk + 5);
+        
+        free(hash);
     }
+
+    storage_signal(file, tag);
     storage_metadata_destroy(metadata);
     log_info(logger_storage, "## %s - Commit de File:Tag %s:%s", query_id, file, tag);
     return OP_EXITOSA;
@@ -345,7 +375,9 @@ rta_storage storage_tag(char* file_o, char* tag_o, char* file_n, char* tag_n, ch
     rta_storage result = storage_create(file_n, tag_n, query_id);
     if (result != OP_EXITOSA) {return result;}
 
+    storage_wait(file_o, tag_o);
     t_metadata_file* metadata_ft_o = storage_metadata_read(file_o, tag_o);
+    storage_signal(file_o, tag_o);
     if (!metadata_ft_o)
     {
         log_error(logger_storage, "No se pudo leer metadata para TAG en %s:%s", file_o, tag_o);
@@ -353,6 +385,7 @@ rta_storage storage_tag(char* file_o, char* tag_o, char* file_n, char* tag_n, ch
     }
     free(metadata_ft_o->estado);
     metadata_ft_o->estado = string_duplicate("WORK_IN_PROGRESS");
+    storage_wait(file_n, tag_n);
     storage_metadata_write(file_n, tag_n, metadata_ft_o);
 
     int cant_blks = list_size(metadata_ft_o->blocks);
@@ -373,15 +406,18 @@ rta_storage storage_tag(char* file_o, char* tag_o, char* file_n, char* tag_n, ch
         }
     }
 
+    storage_signal(file_n, tag_n);
     storage_metadata_destroy(metadata_ft_o);
     log_info(logger_storage, "## %s - Tag creado %s:%s", query_id, file_n, tag_n);
     return OP_EXITOSA;
 }
 
 rta_storage storage_delete(char* file, char* tag, char* query_id) {
+    storage_wait(file, tag);
     t_metadata_file* meta = storage_metadata_read(file, tag);
     if (!meta)
     {
+        storage_signal(file, tag);
         log_error(logger_storage, "No se pudo leer metadata para DELETE en %s:%s", file, tag);
         return ERR_INEXISTENCIA;
     }
@@ -402,12 +438,11 @@ rta_storage storage_delete(char* file, char* tag, char* query_id) {
 
         struct stat blk_stat;
         stat(phys_path, &blk_stat);
+        free(phys_path);
         
         if (blk_stat.st_nlink < 2) {
-            unlink(phys_path);
             mark_block_free(blk_num, query_id);
         }
-        free(phys_path);
     }
     storage_metadata_destroy(meta);
 
@@ -421,6 +456,9 @@ rta_storage storage_delete(char* file, char* tag, char* query_id) {
     
     rmdir(log_path);
     free(log_path);
+
+    remove_lock(file, tag);
+    storage_signal(file, tag);
 
     log_info(logger_storage, "## %s - Tag Eliminado %s:%s", query_id, file, tag);
 

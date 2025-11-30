@@ -68,4 +68,6 @@ void init(char *config_name)
     }
 
     log_info(logger_storage, "Bitmap inicializado correctamente (%d bloques)", blocks_count);
+
+    init_locks_index();
 }

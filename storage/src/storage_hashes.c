@@ -5,7 +5,7 @@ char* get_hash_from_content(char* data) {
     return crypto_md5(data, BLOCK_SIZE);
 }
 
-// Abre el file/tag/logical/block.dat y genera el hash (no esta sincronizado)
+// Abre el file/tag/logical/block.dat y genera el hash
 char* get_hash_from_block(char* file, char* tag, int l_block_num) {
     char* path = string_from_format("files/%s/%s/logical_blocks/%05d.dat", file, tag, l_block_num);
     FILE* blk = fopen(path, "rb");
@@ -27,13 +27,18 @@ void load_hash_in_index(char* hash, int p_block_num) {
 }
 
 bool hash_is_loaded(char* hash) {
-    return config_has_property(config_hash_index, hash);
+    pthread_mutex_lock(&bhi_mutex);
+    bool result = config_has_property(config_hash_index, hash);
+    pthread_mutex_unlock(&bhi_mutex); 
+    return result;
 }
 
 char* block_asocied_to(char* hash) {
     char* value;
-    if (hash_is_loaded(hash)) {
+    if (hash_is_loaded(hash)) {    
+        pthread_mutex_lock(&bhi_mutex);
         value = config_get_string_value(config_hash_index, hash);
+        pthread_mutex_unlock(&bhi_mutex);
     } else {
         value = NULL;
     }
@@ -42,7 +47,11 @@ char* block_asocied_to(char* hash) {
 
 void remove_hash(char* hash) {
     if (hash_is_loaded(hash)) {
-        config_remove_key(config_hash_index, hash);
-    }
+            pthread_mutex_lock(&bhi_mutex);
+            config_remove_key(config_hash_index, hash);
+            pthread_mutex_unlock(&bhi_mutex);
+    }    
+    pthread_mutex_lock(&bhi_mutex);
     config_save(config_hash_index);
+    pthread_mutex_unlock(&bhi_mutex);
 }

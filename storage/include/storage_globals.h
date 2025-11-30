@@ -3,7 +3,9 @@
 
 #include <commons/log.h>
 #include <commons/config.h>
+#include <commons/collections/dictionary.h>
 #include <pthread.h>
+#include <semaphore.h>
 
 extern t_log *logger_storage;
 
@@ -22,22 +24,25 @@ extern int CANT_WORKERS;
 
 extern pthread_mutex_t fs_lock;               // mutex global del FS
 extern pthread_mutex_t worker_count_mutex;    // para CANT_WORKERS
+extern pthread_mutex_t bhi_mutex;             // mutex para controlar el block_hash_index
 
 // Códigos de resultado fijos
 #define STORAGE_RESULT_OK 0
 #define STORAGE_RESULT_ERROR -1
 #define STORAGE_RESULT_BUSY 1
 
-// Tipos de operación simulados
-typedef enum
+
+// Sincro de File:Tag
+extern t_dictionary* locks_index;
+extern sem_t sem_locks_index;
+typedef struct t_lock
 {
-    STORAGE_OP_CREATE = 1,
-    STORAGE_OP_TRUNCATE,
-    STORAGE_OP_WRITE,
-    STORAGE_OP_READ,
-    STORAGE_OP_COMMIT,
-    STORAGE_OP_DELETE,
-    STORAGE_OP_TAG
-} t_storage_operation;
+    sem_t sem_file_tag;
+    int count_waiting;
+    bool delete;
+} t_lock;
+
+
+
 
 #endif 

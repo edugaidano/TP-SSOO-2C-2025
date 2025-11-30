@@ -58,16 +58,16 @@ void *storage_worker_handler(void *arg)
 
             enviar_paquete(socket, size_tag_file, logger_storage);
 
-            log_info(logger_storage, "El Worker %s - Solicito informacion sobre %s:%s (size=%d)", 
-                id_worker ? id_worker : "?", file, tag, size);
+            /*log_info(logger_storage, "El Worker %s - Solicito informacion sobre %s:%s (size=%d)", 
+                id_worker ? id_worker : "?", file, tag, size);*/
             break;
         }
         case INSTRUCCION_STORAGE:
         {
             usleep(RETARDO_OPERACION * 1000);
-            pthread_mutex_lock(&fs_lock);
+            //pthread_mutex_lock(&fs_lock);
             rta_storage result = desglozar_instruccion(package);
-            pthread_mutex_unlock(&fs_lock);
+            //pthread_mutex_unlock(&fs_lock);
 
             // enviar resultado al Worker
             if (send(socket, &result, sizeof(rta_storage), 0) <= 0)
@@ -93,11 +93,11 @@ void *storage_worker_handler(void *arg)
             char* contenido = list_get(package, 3);
             char* query_id = list_get(package, 4);
 
-            pthread_mutex_lock(&fs_lock);
+            //pthread_mutex_lock(&fs_lock);
             
             rta_storage result = storage_write(file, tag, nro_pagina, contenido, query_id);
 
-            pthread_mutex_unlock(&fs_lock);
+            //pthread_mutex_unlock(&fs_lock);
 
             if (send(socket, &result, sizeof(rta_storage), 0) <= 0)
             {

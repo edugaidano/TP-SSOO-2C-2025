@@ -4,6 +4,7 @@
 #include "storage_bitmap.h"
 #include "storage_globals.h"
 #include "storage_hashes.h"
+#include "storage_locks.h"
 #include "utils/op_codes.h"
 #include <errno.h>
 #include <stdlib.h>
@@ -28,7 +29,7 @@ void storage_metadata_write(const char* file_name, const char* tag, t_metadata_f
 void storage_metadata_destroy(t_metadata_file* metadata);
 
 // operaciones
-rta_storage storage_truncate(const char* file_name, const char* tag, int new_size, char* query_id);
+rta_storage storage_truncate(char* file_name, char* tag, int new_size, char* query_id);
 rta_storage storage_write(char* file_name, char* tag, int l_block_num, char* buffer, char* query_id);
 rta_storage storage_read(char* file_name, char* tag, int l_block_num, char* buffer, char* query_id);
 rta_storage storage_commit(char* file, char* tag, char* query_id);
