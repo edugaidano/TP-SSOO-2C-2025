@@ -78,8 +78,9 @@ void storage_fresh_start()
         fwrite(zero_block, BLOCK_SIZE, 1, block);
         fclose(block);
 
-    }    
+    }
     free(zero_block);
+    
     // Crear estructura de archivos inicial
     mkdir("files/initial_file", 0777);
     mkdir("files/initial_file/BASE", 0777);

@@ -2,6 +2,7 @@
 #define STORAGE_FRESH_START_H
 
 #include "storage_globals.h"
+#include "storage_hashes.h"
 #include <commons/log.h>
 #include <commons/config.h>
 #include <commons/bitarray.h>

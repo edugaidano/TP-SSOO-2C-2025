@@ -55,7 +55,7 @@ int find_free_block()
     pthread_rwlock_wrlock(&bitmap_lock);
     int free_block = -1;
 
-    for (int i = 0; i < bitarray_get_max_bit(bitmap); i++)
+    for (int i = 1; i < bitarray_get_max_bit(bitmap); i++)
     {
         if (!bitarray_test_bit(bitmap, i))
         {

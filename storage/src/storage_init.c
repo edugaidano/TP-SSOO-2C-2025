@@ -58,6 +58,11 @@ void init(char *config_name)
 
     // HASH_INDEX
     config_hash_index = config_create("blocks_hash_index.config");
+    char *zero_block = string_repeat('0', BLOCK_SIZE);
+    char* hash = get_hash_from_content(zero_block);
+    free(zero_block);
+    load_hash_in_index(hash, 0);
+    free(hash);
 
     // BITMAP
     int blocks_count = FS_SIZE / BLOCK_SIZE;

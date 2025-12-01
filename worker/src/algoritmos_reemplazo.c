@@ -84,6 +84,7 @@ void notificar_cambios(nodo_pagina* victima, char* identificador, void* p_marco,
     agregar_a_paquete(paquete, &victima->nro_pagina, sizeof(int));      // Nro Pagina
     agregar_a_paquete(paquete, p_marco, tam_pagina);                    // Contenido
     agregar_a_paquete(paquete, query_id, string_length(query_id) + 1);  // Query ID
+
     enviar_paquete(fd_storage, paquete, logger_worker);
 
     rta_storage result;
@@ -99,7 +100,6 @@ void notificar_cambios(nodo_pagina* victima, char* identificador, void* p_marco,
 }
 
 // Private Functions //
-
 
 void check_file_tag (char* id_actual, char* id_nuevo) {
     file_tag* ft = file_tag_en_memoria(id_actual);

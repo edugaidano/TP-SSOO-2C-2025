@@ -18,9 +18,7 @@ void init_locks_index() {
     while (!string_array_is_empty(files)) {
 
         char* file = string_array_pop(files);
-        log_warning(logger_storage, "F = %s", file);
         string_append_with_format(&path, "/%s", file);
-        log_warning(logger_storage, "P = %s", path);
 
         char** tags = get_in(path, __S_IFREG);
         free(path);
@@ -39,7 +37,18 @@ void init_locks_index() {
         string_array_destroy(tags);
     }
 
-    string_array_destroy(files);    
+    string_array_destroy(files);  
+
+    int blocks_count = FS_SIZE / BLOCK_SIZE;
+    blk_mutex_list = list_create();
+
+    for (int i = 0; i < blocks_count; i++)
+    {
+        sem_t* blk_mutex = malloc(sizeof(sem_t));
+        sem_init(blk_mutex, 0, 1);
+        list_add(blk_mutex_list, blk_mutex);
+    }
+    
 }
 
 void storage_wait(char* file, char* tag) {

@@ -114,9 +114,10 @@ void interpretar_WRITE(t_instrucion* instruccion) {
     int base = atoi(instruccion->datos[1]);
     char* contenido = instruccion->datos[2];
 
-    double nro_pagina = ceil(base / tam_pagina);
-    nodo_pagina* pagina = pagina_en_Tabla(identificador, nro_pagina);
+    int nro_pagina = base / tam_pagina;
     
+    nodo_pagina* pagina = pagina_en_Tabla(identificador, nro_pagina);
+
     escribir_pagina(pagina, identificador, base, contenido);
     log_ejecucion(OK, instruccion->identificador);
 }

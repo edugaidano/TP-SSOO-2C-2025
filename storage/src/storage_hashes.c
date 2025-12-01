@@ -22,23 +22,19 @@ char* get_hash_from_block(char* file, char* tag, int l_block_num) {
 void load_hash_in_index(char* hash, int p_block_num) {
     char* file_name = string_from_format("block%04d", p_block_num);
     remove_hash(hash);
-    dictionary_put(config_hash_index->properties, hash, file_name);
+    config_set_value(config_hash_index, hash, file_name);
     config_save(config_hash_index);
 }
 
 bool hash_is_loaded(char* hash) {
-    pthread_mutex_lock(&bhi_mutex);
     bool result = config_has_property(config_hash_index, hash);
-    pthread_mutex_unlock(&bhi_mutex); 
     return result;
 }
 
 char* block_asocied_to(char* hash) {
     char* value;
     if (hash_is_loaded(hash)) {    
-        pthread_mutex_lock(&bhi_mutex);
         value = config_get_string_value(config_hash_index, hash);
-        pthread_mutex_unlock(&bhi_mutex);
     } else {
         value = NULL;
     }
@@ -47,11 +43,7 @@ char* block_asocied_to(char* hash) {
 
 void remove_hash(char* hash) {
     if (hash_is_loaded(hash)) {
-            pthread_mutex_lock(&bhi_mutex);
             config_remove_key(config_hash_index, hash);
-            pthread_mutex_unlock(&bhi_mutex);
-    }    
-    pthread_mutex_lock(&bhi_mutex);
+    }
     config_save(config_hash_index);
-    pthread_mutex_unlock(&bhi_mutex);
 }

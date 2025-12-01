@@ -21,3 +21,5 @@ pthread_mutex_t bhi_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 t_dictionary* locks_index;
 sem_t sem_locks_index;
+
+t_list* blk_mutex_list;

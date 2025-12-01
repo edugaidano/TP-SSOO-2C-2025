@@ -35,14 +35,14 @@ extern pthread_mutex_t bhi_mutex;             // mutex para controlar el block_h
 // Sincro de File:Tag
 extern t_dictionary* locks_index;
 extern sem_t sem_locks_index;
+
+extern t_list* blk_mutex_list;                // array de mutexs para cada bloque fisico
+
 typedef struct t_lock
 {
     sem_t sem_file_tag;
     int count_waiting;
     bool delete;
 } t_lock;
-
-
-
 
 #endif 
