@@ -52,6 +52,7 @@ void init(char *config_name)
         }
         FS_SIZE = config_get_int_value(config_super_block, "FS_SIZE");
         BLOCK_SIZE = config_get_int_value(config_super_block, "BLOCK_SIZE");
+        chdir(PUNTO_MONTAJE);
     }
 
     log_info(logger_storage, "Config superblock cargada -> FS_SIZE:%d | BLOCK_SIZE:%d", FS_SIZE, BLOCK_SIZE);
