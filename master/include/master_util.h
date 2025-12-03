@@ -7,8 +7,8 @@
 int asign_query_id();
 void liberar_query(query_t *query, int pc);
 void destruir_query(query_t *query);
-void finalizar_query(query_t *query, razon_fin razon);
-void notificar_finalizacion(query_t *query, razon_fin razon);
+void finalizar_query(query_t *query, razon_fin razon, rta_storage c_error);
+void notificar_finalizacion(query_t *query, razon_fin razon, rta_storage c_error);
 void notificar_read(query_t *query, char *file, char *tag, char *contenido);
 void liberar_worker(worker_t *worker);
 query_t *obtener_query();

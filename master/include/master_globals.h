@@ -42,6 +42,7 @@ struct worker
     int socket;
     char *id;
     bool interrumpir;
+    bool error_at_exec;
     sem_t sem_interrupt;
     pthread_mutex_t mutex;
     state_t state;

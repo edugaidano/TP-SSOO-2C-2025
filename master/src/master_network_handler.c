@@ -144,6 +144,9 @@ void *query_handler(void *arg)
 void *worker_handler(void *arg)
 {
     worker_t *worker = arg;
+    worker->error_at_exec = false;
+    int bkp_query_id;
+    int bkp_query_prioridad;
     while (true)
     {
         t_list *package = recv_package(worker->socket, logger_master);
@@ -153,7 +156,7 @@ void *worker_handler(void *arg)
         {
         case CONSULTA_INTERRUPCION: 
         {
-            bool result = worker->interrumpir || worker->query->interrumpir;
+            bool result = worker->interrumpir || worker->query->interrumpir || worker->error_at_exec;
             
             if (send(worker->socket, &result, sizeof(bool), 0) <= 0) 
             {
@@ -174,12 +177,19 @@ void *worker_handler(void *arg)
                 pthread_mutex_unlock(&mutex_ready);
             }
 
-            if (worker->query->interrumpir) // Interrupcion por desconexion de query_control
+            if (worker->query->interrumpir && !worker->error_at_exec) // Interrupcion por desconexion de query_control
             {
                 log_info(logger_master, 
                     "## Se desaloja la Query %d(%d) del Worker %s - Motivo: DESCONEXION", 
                     worker->query->id, worker->query->prioridad, worker->id);
                 sem_post(&(worker->sem_interrupt));
+            }
+
+            if (worker->error_at_exec) {
+                log_info(logger_master, 
+                    "## Se desaloja la Query %d(%d) del Worker %s - Motivo: DESCONEXION", 
+                    bkp_query_id, bkp_query_prioridad, worker->id);
+                worker->error_at_exec = false;
             }
 
             if (result)
@@ -206,7 +216,7 @@ void *worker_handler(void *arg)
         }
         case INSTRUCCION_MASTER: // La unica es el EXIT, se podria hacer una verificacion con el contenido
         {
-            finalizar_query(worker->query, FINALIZACION_CORRECTA);
+            finalizar_query(worker->query, FINALIZACION_CORRECTA, 0);
             resultado_t result = OK;
             if (send(worker->socket, &result, sizeof(resultado_t), 0) <= 0) 
             {
@@ -221,21 +231,29 @@ void *worker_handler(void *arg)
         {
             if (worker->state == EXEC)
             {
-                finalizar_query(worker->query, ERR_DESC_WORKER);
-                destruir_worker(worker);
+                finalizar_query(worker->query, ERR_DESC_WORKER, 0);
             }
             else
             {
                 log_info(logger_master, 
                     "Se desconecta el Worker %s - No habia una query en ejecucion - Cantidad total de Workers: %d", 
                     worker->id, list_size(workers) - 1);
-                destruir_worker(worker);
             }
+            destruir_worker(worker);
             list_destroy_and_destroy_elements(package, free);
             return NULL;
         }
+        case ERROR_AT_EXEC:
+        {
+            worker->error_at_exec = true;
+            resultado_t c_error = *(resultado_t*)list_get(package, 0);
+            bkp_query_id = worker->query->id;
+            bkp_query_prioridad = worker->query->prioridad;
+            finalizar_query(worker->query, ERR_STORAGE, c_error);
+            break;
+        }
         default:
-            log_error(logger_master, "Se recibio un paquete desconocido o no definido correctamente de parte del woeker %s", worker->id);
+            log_error(logger_master, "Se recibio un paquete desconocido o no definido correctamente de parte del woeker %s (%d)", worker->id, opcode);
             break;
         }
 

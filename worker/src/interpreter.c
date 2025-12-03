@@ -117,6 +117,14 @@ void interpretar_WRITE(t_instrucion* instruccion) {
     int nro_pagina = base / tam_pagina;
     
     nodo_pagina* pagina = pagina_en_Tabla(identificador, nro_pagina);
+    if (!pagina) { 
+        /*
+         * Que no exista la pagina en tabla es equivalente a decir que se esta intentado acceder fuera de los limites del archivo, 
+         * cuando busca la pagina en tabla si esta por fuera de los limites de la misma, retorna NULL
+         */
+        log_ejecucion(ERR_FUERA_LIMITE, instruccion->identificador);
+        return;
+    }
 
     escribir_pagina(pagina, identificador, base, contenido);
     log_ejecucion(OK, instruccion->identificador);
@@ -130,6 +138,14 @@ void interpretar_READ(t_instrucion* instruccion) {
 
     double nro_pagina = ceil(base / tam_pagina);
     nodo_pagina* pagina = pagina_en_Tabla(identificador, nro_pagina);
+    if (!pagina) { 
+        /*
+         * Que no exista la pagina en tabla es equivalente a decir que se esta intentado acceder fuera de los limites del archivo, 
+         * cuando busca la pagina en tabla si esta por fuera de los limites de la misma, retorna NULL
+         */
+        log_ejecucion(ERR_FUERA_LIMITE, instruccion->identificador);
+        return;
+    }
 
     leer_pagina(pagina, identificador, base, size);
     log_ejecucion(OK, instruccion->identificador);
@@ -158,7 +174,7 @@ void log_ejecucion(int resultado, char* instruccion) {
         case ERR_FUERA_LIMITE:
         {
             log_error(logger_worker, "Error al ejecutar instruccion %s (%d)", instruccion, resultado);
-            exit(EXIT_FAILURE);
+            notif_query_error(resultado);
             break;
         }
         default:

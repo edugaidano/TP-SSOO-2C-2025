@@ -23,7 +23,8 @@ typedef enum opcodes
     INFO_FILE_TAG_STORAGE,
     INFO_FILE_TAG_WORKER,
     MODIFICACIONES_STORAGE,
-    RTA_STORAGE_WORKER
+    RTA_STORAGE_WORKER,
+    ERROR_AT_EXEC
 } op_code;
 
 typedef enum rta_storage

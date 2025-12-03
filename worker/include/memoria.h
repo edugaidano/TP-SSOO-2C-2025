@@ -19,4 +19,6 @@ void actualizar_tabla(file_tag* ft);
 void escribir_pagina(nodo_pagina* pagina, char* identificador, int direccion_base, char* datos);
 void leer_pagina(nodo_pagina* pagina, char*identificador, int direccion, int size);
 
+void notif_query_error(rta_storage c_error);
+
 #endif

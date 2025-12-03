@@ -95,7 +95,8 @@ void notificar_cambios(nodo_pagina* victima, char* identificador, void* p_marco,
     
     if (result != OP_EXITOSA) {
         log_error(logger_worker, "Error en Storage al realizar las modificaciones en %s (%d)", identificador, result);
-        exit(EXIT_FAILURE);
+        notif_query_error(result);
+        //exit(EXIT_FAILURE);
     }
 }
 

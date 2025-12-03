@@ -6,25 +6,32 @@ int asign_query_id()
     return ++id;
 }
 
-void finalizar_query(query_t *query, razon_fin razon)
+// el c_error solo es requerido para razon=ERR_STORAGE, en otro caso completar con 0
+void finalizar_query(query_t *query, razon_fin razon, rta_storage c_error)
 {
     pthread_mutex_lock(&mutex_exec);
     list_remove_element(querys_exec, query);
-    query->state = FINISHED;
     pthread_mutex_unlock(&mutex_exec);
+    query->state = FINISHED;
 
     switch (razon)
     {
     case FINALIZACION_CORRECTA:
         log_info(logger_master, "## Se terminó la Query %d en el Worker %s", query->id, query->worker->id);
         break;
-    default:
+    case ERR_DESC_WORKER:
         log_info(logger_master, "## Se desconecta el Worker %s - Se finaliza la Query %d - Cantidad total de Workers: %d", 
             query->worker->id, query->id, (list_size(workers) - 1));
         break;
+    case ERR_STORAGE:
+        log_error(logger_master, "Se finzaliza la query %d por un error durante la ejecucion de la misma", query->id);
+        break;
+    default:
+        log_error(logger_master, "Se finaliza la query %d (razon no definida)", query->id);
+        break;
     }
 
-    notificar_finalizacion(query, razon);
+    notificar_finalizacion(query, razon, c_error);
 }
 
 bool priority_comparator(void* a, void* b)
@@ -73,13 +80,18 @@ void destruir_query(query_t *query)
     free(query);
 }
 
-void notificar_finalizacion(query_t *query, razon_fin razon_enum)
+void notificar_finalizacion(query_t *query, razon_fin razon_enum, rta_storage c_error)
 {
     int mensaje = NOTIF_FINAL;
 
     paquete_t *paquete = crear_paquete(NOTIF_QUERY_CONTROL);
     agregar_a_paquete(paquete, &mensaje, sizeof(int));
     agregar_a_paquete(paquete, &razon_enum, sizeof(razon_fin));
+    if (razon_enum == ERR_STORAGE)
+    {
+        agregar_a_paquete(paquete, &c_error, sizeof(rta_storage));
+    }
+    
     enviar_paquete(query->socket, paquete, logger_master);
 }
 

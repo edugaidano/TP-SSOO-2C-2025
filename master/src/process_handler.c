@@ -39,7 +39,7 @@ void *actualizador()
             if (query->prioridad > 0)
             {
                 query->prioridad--;
-                log_info(logger_master, "##%d Cambio de prioridad: %d - %d", query->id, (query->prioridad + 1), query->prioridad);
+                log_info(logger_master, "## %d Cambio de prioridad: %d - %d", query->id, (query->prioridad + 1), query->prioridad);
             }
         }
 

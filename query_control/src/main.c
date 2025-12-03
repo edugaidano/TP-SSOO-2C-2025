@@ -3,6 +3,7 @@
 // Private Function //
 
 void recibir_mensaje();
+void log_storage_error(rta_storage c_error);
 
 // Main function //
 
@@ -77,10 +78,11 @@ void recibir_mensaje()
                         log_info(logger_query_control, "## Query finalizada - La ejecución finalizó correctamente");
                         break;
                     case ERR_DESC_WORKER:
-                        log_info(logger_query_control, "## Query finalizada - La ejecución finalizó por desconexión del worker");
+                        log_error(logger_query_control, "## Query finalizada - La ejecución finalizó por desconexión del worker");
                         break;
                     case ERR_STORAGE:
-                        log_info(logger_query_control, "## Query finalizada - La ejecución finalizó por un error del storage");
+                        rta_storage c_error = *(rta_storage*)list_get(package, 2);
+                        log_storage_error(c_error);
                         break;
                     default:
                         log_warning(logger_query_control, "## Query finalizada - motivo desconocido o no definido correctamente");
@@ -103,5 +105,29 @@ void recibir_mensaje()
                 exit(EXIT_FAILURE);
         }
         list_destroy_and_destroy_elements(package, free);
+    }
+}
+
+void log_storage_error(rta_storage c_error) {
+    switch (c_error)
+    {
+    case ERR_FUERA_LIMITE:
+        log_error(logger_query_control, "## Query finalizada - Lectura o escritura fuera de limite");
+        break;
+    case ERR_WRITE_COMMITED:
+        log_error(logger_query_control, "## Query finalizada - Escritura no permitida");
+        break;
+    case ERR_ESP_INSUFICIENTE:
+        log_error(logger_query_control, "## Query finalizada - Espacio Insuficiente");
+        break;
+    case ERR_PREEXISTENCIA:
+        log_error(logger_query_control, "## Query finalizada - File / Tag preexistente");
+        break;
+    case ERR_INEXISTENCIA:
+        log_error(logger_query_control, "## Query finalizada - File / Tag inexistente");
+        break;   
+    default:
+        log_error(logger_query_control, "## Query finalizada - Error durante la ejecucion no definido");
+        break;
     }
 }

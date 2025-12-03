@@ -81,6 +81,9 @@ nodo_pagina* pagina_en_Tabla(char* identificador, int nro_pagina) {
     file_tag* ft = file_tag_en_memoria(identificador);
     if (nro_pagina > list_size(ft->tabla_paginas)) {
         actualizar_tabla(ft);
+        if (nro_pagina > list_size(ft->tabla_paginas)) {
+            return NULL;
+        } 
     }
     
     nodo_pagina* pagina = list_get(ft->tabla_paginas, nro_pagina);
@@ -234,6 +237,12 @@ void actualizar_tabla(file_tag* ft) {
         list_destroy(ft->tabla_paginas);
         ft->tabla_paginas = new_page_table;
     }
+}
+
+void notif_query_error(rta_storage c_error) {
+    paquete_t* paquete = crear_paquete(ERROR_AT_EXEC);
+    agregar_a_paquete(paquete, &c_error, sizeof(rta_storage));
+    enviar_paquete(master_socket, paquete, logger_worker);
 }
 
 // Private Functions //
