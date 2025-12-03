@@ -390,7 +390,11 @@ rta_storage storage_commit(char* file, char* tag, char* query_id) {
         log_info(logger_storage, "## %s - %s:%s Se agregó el hard link del bloque lógico %05d al bloque %s",
             query_id, file, tag, i, phys_blk + 5);
 
-        mark_block_free(actual_blk, query_id);
+        if (actual_blk != 0)
+        {
+            mark_block_free(actual_blk, query_id);
+        }
+        
         list_remove_and_destroy_element(metadata->blocks, i, free);
         list_add_in_index(metadata->blocks, i, string_itoa(atoi(phys_blk + 5))); // atoi -> itoa para tener un %d y no un %04d 
 
@@ -476,25 +480,32 @@ rta_storage storage_delete(char* file, char* tag, char* query_id) {
 
         sem_t* blk_m = list_get(blk_mutex_list, blk_num);
         sem_wait(blk_m);
-        char* hash = get_hash_from_block(file, tag, i);
-        pthread_mutex_lock(&bhi_mutex);
-        remove_hash(hash);
-        pthread_mutex_unlock(&bhi_mutex);
-        free(hash);
-
+        
         char* log_block = string_from_format("%s/logical_blocks/%05d.dat", log_path, i);
-        char* phys_path = string_from_format("physical_blocks/block%04d.dat", blk_num);
-
+        char* hash = get_hash_from_block(file, tag, i);
+        
         unlink(log_block);
         free(log_block);
-
+        
+        if (blk_num == 0) {
+            free(hash);
+            sem_post(blk_m);
+            continue;
+        }
+        
+        char* phys_path = string_from_format("physical_blocks/block%04d.dat", blk_num);
+        
         struct stat blk_stat;
         stat(phys_path, &blk_stat);
         free(phys_path);
         
         if (blk_stat.st_nlink < 2) {
+            pthread_mutex_lock(&bhi_mutex);
+            remove_hash(hash);
+            pthread_mutex_unlock(&bhi_mutex);
             mark_block_free(blk_num, query_id);
         }
+        free(hash);
         sem_post(blk_m);
     }
     storage_metadata_destroy(meta);
