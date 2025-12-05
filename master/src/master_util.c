@@ -124,8 +124,8 @@ void destruir_worker(worker_t *worker)
     pthread_mutex_lock(&mutex_workers);
     list_remove_element(workers, worker);
     pthread_mutex_unlock(&mutex_workers);
-    sem_close(&(worker->sem_interrupt));
 
+    sem_close(&(worker->sem_interrupt));
     close(worker->socket);
     free(worker->id);
     free(worker);
@@ -172,11 +172,6 @@ void hacer_par_query_worker(query_t *query, worker_t *worker)
     worker->state = EXEC;
     pthread_mutex_unlock(&mutex_exec);
     pthread_mutex_unlock(&mutex_workers);
-
-    if (list_size(querys_exec) == list_size(workers))
-    {
-        pthread_cond_signal(&all_workers_busy);
-    }
 }
 
 void solicitar_ejecucion_query(query_t *query, int socket)

@@ -18,4 +18,3 @@ sem_t sem_workers;
 pthread_mutex_t mutex_ready = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_exec = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_workers = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t all_workers_busy = PTHREAD_COND_INITIALIZER;

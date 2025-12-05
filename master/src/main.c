@@ -11,6 +11,9 @@ int main(int argc, char *argv[])
 
     init(argv[1]);
 
+    atexit(liberar_recursos);
+    signal(SIGINT, exit);
+
     int server_socket = create_server(PUERTO_ESCUCHA, logger_master);
 
     pthread_t connections_thread, main_thread;

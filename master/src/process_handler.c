@@ -48,21 +48,3 @@ void *actualizador()
     }
     return 0;
 }
-
-void *desalojador()
-{
-    while (1)
-    {
-        pthread_mutex_lock(&mutex_exec);
-
-        while (!((list_size(querys_exec) != 0) && list_size(querys_exec) == list_size(workers)))
-        {
-            pthread_cond_wait(&all_workers_busy, &mutex_exec);
-        }
-
-        query_t *victima = buscar_victima();
-        solicitar_desalojo(victima);
-
-        pthread_mutex_unlock(&mutex_exec);
-    }
-}
