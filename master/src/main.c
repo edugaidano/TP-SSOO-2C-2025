@@ -16,18 +16,11 @@ int main(int argc, char *argv[])
 
     int server_socket = create_server(PUERTO_ESCUCHA, logger_master);
 
-    pthread_t connections_thread, main_thread;
-    pthread_create(&main_thread, NULL, &process_handler, NULL);
-    pthread_create(&connections_thread, NULL, &master_network_handler, &server_socket);
-    pthread_detach(connections_thread);
-    pthread_detach(main_thread);
+    pthread_t process_thread;
+    pthread_create(&process_thread, NULL, &process_handler, NULL);
+    pthread_detach(process_thread);
 
-    while (1)
-    {
-    }
-
-    log_destroy(logger_master);
-    config_destroy(config_master);
+    master_network_handler(&server_socket);
 
     return 0;
 }
