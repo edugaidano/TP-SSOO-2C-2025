@@ -100,6 +100,7 @@ paquete_t *recibir_paquete(int socket_cliente, t_log *logger)
     if (recv(socket_cliente, &size_total, sizeof(int), MSG_WAITALL) <= 0)
     {
         log_error(logger, "Error en recv (fd %d)", socket_cliente);
+        destruir_paquete(paquete);
         exit(EXIT_FAILURE);
     }
 
@@ -108,6 +109,7 @@ paquete_t *recibir_paquete(int socket_cliente, t_log *logger)
         if (recv(socket_cliente, &size, sizeof(int), MSG_WAITALL) <= 0)
         {
             log_error(logger, "Error en recv (fd %d)", socket_cliente);
+            destruir_paquete(paquete);
             exit(EXIT_FAILURE);
         }
         if (size > 0)
@@ -116,6 +118,8 @@ paquete_t *recibir_paquete(int socket_cliente, t_log *logger)
             if (recv(socket_cliente, buffer, size, MSG_WAITALL) <= 0)
             {
                 log_error(logger, "Error en recv (fd %d)", socket_cliente);
+                destruir_paquete(paquete);
+                free(buffer);
                 exit(EXIT_FAILURE);
             }
             agregar_a_paquete(paquete, buffer, size);
@@ -169,18 +173,13 @@ t_list *recv_package(int socket, t_log *logger)
     *codigo = paquete->codigo_operacion;
     list_add(lista, codigo);
 
-    if (paquete->codigo_operacion == DESCONEXION)
-    {
-        return lista;
-    }
-
     buffer_t *item = obtener_siguiente_item(paquete);
     while (item != NULL)
     {
         char *dato = malloc(item->size);
         memcpy(dato, item->stream, item->size);
         list_add(lista, dato);
-
+        free_buffer(item);
         item = obtener_siguiente_item(paquete);
     }
 

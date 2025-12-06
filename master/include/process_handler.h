@@ -10,6 +10,5 @@
 
 void *process_handler(void *arg);
 void *actualizador();
-void *desalojador();
 
 #endif

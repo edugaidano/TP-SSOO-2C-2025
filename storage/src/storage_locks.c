@@ -15,6 +15,10 @@ void init_locks_index() {
 
     char* path = string_from_format("%s/files", PUNTO_MONTAJE);
     char** files = get_in(path, __S_IFDIR);
+    if (string_array_is_empty(files)) {
+        free(path);
+    }
+    
     while (!string_array_is_empty(files)) {
 
         char* file = string_array_pop(files);
@@ -156,6 +160,7 @@ char** get_in(char* path, unsigned long mask) { // unsigned long mask -> para qu
 
 void destroy_lock(char* file, char* tag, t_lock* lock) {
     sem_destroy(&(lock->sem_file_tag));
+    //free(&(lock->sem_file_tag));
     t_dictionary* tags_index = dictionary_get(locks_index, file);
     dictionary_remove_and_destroy(tags_index, tag, free);
     if (dictionary_is_empty(tags_index)) {

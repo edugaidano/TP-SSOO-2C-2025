@@ -25,7 +25,6 @@ extern sem_t sem_workers;
 extern pthread_mutex_t mutex_ready;
 extern pthread_mutex_t mutex_exec;
 extern pthread_mutex_t mutex_workers;
-extern pthread_cond_t all_workers_busy;
 
 typedef struct worker worker_t;
 typedef struct query query_t;

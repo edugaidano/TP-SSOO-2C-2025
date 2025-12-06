@@ -19,9 +19,11 @@ int bitmap_init(const char* mount_point, int blocks_count)
     bitmap_size = (blocks_count + 7) / 8;
 
     bitmap_fd = open(path, O_RDWR);
+
     if (bitmap_fd < 0)
     {
         log_error(logger_storage, "No se pudo abrir %s", path);
+        free(path);
         return -1;
     }
 
@@ -30,8 +32,11 @@ int bitmap_init(const char* mount_point, int blocks_count)
     {
         log_error(logger_storage, "Error al mapear %s", path);
         close(bitmap_fd);
+        free(path);
         return -1;
     }
+
+    free(path);
 
     bitmap = bitarray_create_with_mode(bitmap_data, bitmap_size, LSB_FIRST);
     log_info(logger_storage, "Bitmap inicializado (%d bloques, %zu bytes)", blocks_count, bitmap_size);

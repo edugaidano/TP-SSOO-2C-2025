@@ -22,15 +22,8 @@ extern int FS_SIZE;
 extern int BLOCK_SIZE;
 extern int CANT_WORKERS;
 
-extern pthread_mutex_t fs_lock;               // mutex global del FS
 extern pthread_mutex_t worker_count_mutex;    // para CANT_WORKERS
 extern pthread_mutex_t bhi_mutex;             // mutex para controlar el block_hash_index
-
-// Códigos de resultado fijos
-#define STORAGE_RESULT_OK 0
-#define STORAGE_RESULT_ERROR -1
-#define STORAGE_RESULT_BUSY 1
-
 
 // Sincro de File:Tag
 extern t_dictionary* locks_index;

@@ -23,6 +23,7 @@ void load_hash_in_index(char* hash, int p_block_num) {
     char* file_name = string_from_format("block%04d", p_block_num);
     remove_hash(hash);
     config_set_value(config_hash_index, hash, file_name);
+    free(file_name);
     config_save(config_hash_index);
 }
 

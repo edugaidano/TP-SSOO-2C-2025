@@ -1,8 +1,4 @@
-#include "storage_init.h"
-#include "storage_worker_handler.h"
-#include <pthread.h>
-#include <stdlib.h>
-#include <stdio.h>
+#include "storage_main.h"
 
 int main(int argc, char *argv[])
 {
@@ -14,6 +10,9 @@ int main(int argc, char *argv[])
 
     // Inicializa logger, config y FRESH_START si corresponde
     init(argv[1]);
+
+    atexit(liberar_recursos);
+    signal(SIGINT, exit);
 
     int server_socket = create_server(PUERTO_ESCUCHA, logger_storage);
     log_info(logger_storage, "Servidor Storage escuchando en puerto %s", PUERTO_ESCUCHA);
@@ -35,6 +34,5 @@ int main(int argc, char *argv[])
         pthread_detach(client_thread);
     }
 
-    config_destroy(config_storage);
     return 0;
 }
