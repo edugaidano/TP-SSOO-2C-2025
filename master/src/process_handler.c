@@ -40,9 +40,6 @@ void *actualizador()
             {
                 query->prioridad--;
                 log_info(logger_master, "## %d Cambio de prioridad: %d - %d", query->id, (query->prioridad + 1), query->prioridad);
-            }
-            else
-            {
 
                 worker_t *worker_libre = buscar_worker_libre();
                 if (worker_libre == NULL && !list_is_empty(workers))
