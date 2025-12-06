@@ -179,7 +179,7 @@ t_list *recv_package(int socket, t_log *logger)
         char *dato = malloc(item->size);
         memcpy(dato, item->stream, item->size);
         list_add(lista, dato);
-
+        free_buffer(item);
         item = obtener_siguiente_item(paquete);
     }
 

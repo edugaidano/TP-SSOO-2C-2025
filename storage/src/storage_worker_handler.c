@@ -13,12 +13,6 @@ void *storage_worker_handler(void *arg)
     while (1)
     {
         t_list *package = recv_package(socket, logger_storage);
-        if (!package)
-        {
-            log_error(logger_storage, "Error al recibir paquete del socket %d", socket);
-            break;
-        }
-        
         op_code opcode = get_opcode(package);
 
         switch (opcode)
@@ -65,9 +59,8 @@ void *storage_worker_handler(void *arg)
         case INSTRUCCION_STORAGE:
         {
             usleep(RETARDO_OPERACION * 1000);
-            //pthread_mutex_lock(&fs_lock);
+            
             rta_storage result = desglozar_instruccion(package);
-            //pthread_mutex_unlock(&fs_lock);
 
             // enviar resultado al Worker
             if (send(socket, &result, sizeof(rta_storage), 0) <= 0)
@@ -92,12 +85,8 @@ void *storage_worker_handler(void *arg)
             int nro_pagina = *(int*)list_get(package, 2);
             char* contenido = list_get(package, 3);
             char* query_id = list_get(package, 4);
-
-            //pthread_mutex_lock(&fs_lock);
             
             rta_storage result = storage_write(file, tag, nro_pagina, contenido, query_id);
-
-            //pthread_mutex_unlock(&fs_lock);
 
             if (send(socket, &result, sizeof(rta_storage), 0) <= 0)
             {
@@ -157,9 +146,6 @@ void *storage_worker_handler(void *arg)
 
         list_destroy_and_destroy_elements(package, free);
     }
-
-    if (id_worker)
-        free(id_worker);
-
+    
     return NULL;
 }
