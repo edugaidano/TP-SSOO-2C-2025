@@ -36,6 +36,6 @@ void free_file_tags_locks(void* dictionary_locks){
 void free_lock(void* lock_prt) {
     t_lock* lock = (t_lock*)lock_prt;
     sem_destroy(&(lock->sem_file_tag));
-    free(&(lock->sem_file_tag));
+    //free(&(lock->sem_file_tag));
     free(lock_prt);
 }
