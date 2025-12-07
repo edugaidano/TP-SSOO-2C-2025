@@ -188,6 +188,7 @@ void solicitar_ejecucion_query(query_t *query, int socket)
 
 query_t *buscar_victima()
 {
+    pthread_mutex_lock(&mutex_exec);
     t_list_iterator *iterator = list_iterator_create(querys_exec);
     query_t *victima = list_iterator_next(iterator);
     while (list_iterator_has_next(iterator))
@@ -199,6 +200,7 @@ query_t *buscar_victima()
         }
     }
     list_iterator_destroy(iterator);
+    pthread_mutex_unlock(&mutex_exec);
     return victima;
 }
 

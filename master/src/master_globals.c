@@ -14,6 +14,8 @@ t_list *workers;
 
 sem_t sem_ready;
 sem_t sem_workers;
+sem_t sem_int;
+sem_t sem_check_prior;
 
 pthread_mutex_t mutex_ready = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_exec = PTHREAD_MUTEX_INITIALIZER;

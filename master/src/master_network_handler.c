@@ -14,6 +14,7 @@ void *master_network_handler(void *arg)
         {
         case HANDSHAKE_QUERY_MASTER:
         {
+
             char *archivo = string_duplicate(list_get(list, 0));
             int prioridad = atoi(list_get(list, 1));
 
@@ -29,28 +30,31 @@ void *master_network_handler(void *arg)
 
             if (string_equals_ignore_case(ALGORITMO_PLANIFICACION, "FIFO"))
             {
-                pthread_mutex_unlock(&mutex_ready);
+                pthread_mutex_lock(&mutex_ready);
                 list_add(querys_ready, query);
                 pthread_mutex_unlock(&mutex_ready);
             } 
             else if (string_equals_ignore_case(ALGORITMO_PLANIFICACION, "PRIORIDADES"))
             {
-                pthread_mutex_unlock(&mutex_ready);
+                pthread_mutex_lock(&mutex_ready);
                 int position = list_add_sorted(querys_ready, query, priority_comparator);
-                pthread_mutex_unlock(&mutex_ready);
-
+                
                 if (position == 0) {
+                    sem_wait(&sem_check_prior);
                     worker_t *worker_libre = buscar_worker_libre();
                     if (worker_libre == NULL && !list_is_empty(workers))
                     {
-                       query_t *query_victima = buscar_victima();
-                       if (query_victima->prioridad > query->prioridad)
-                       {
-                           query_victima->worker->interrumpir = true; // Se desalojara cuando verifique la interrupcion
-                       }
+                        query_t *query_victima = buscar_victima();
+                        if (query_victima->prioridad > query->prioridad)
+                        {
+                            query_victima->worker->interrumpir = true; // Se desalojara cuando verifique la interrupcion
+                            sem_wait(&sem_int);
+                        }
                     }
+                    sem_post(&sem_check_prior);
                 }
-            } 
+                pthread_mutex_unlock(&mutex_ready);
+            }
             else
             {
                 log_error(logger_master, "El algoritmo de planificacion no esta definido correctamente");
@@ -181,10 +185,15 @@ void *worker_handler(void *arg)
                 int new_pc = *(int*) list_get(package, 0);
                 worker->query->pc = new_pc;
 
-                pthread_mutex_unlock(&mutex_ready);
+                pthread_mutex_lock(&mutex_exec);
+                //pthread_mutex_lock(&mutex_ready); 
+                list_remove_element(querys_exec, worker->query);
+                worker->query->state = EXEC;
                 list_add_sorted(querys_ready, worker->query, priority_comparator);
                 sem_post(&sem_ready);
-                pthread_mutex_unlock(&mutex_ready);
+                pthread_mutex_unlock(&mutex_exec);
+                //pthread_mutex_unlock(&mutex_ready);
+                sem_post(&sem_int);
             }
 
             if (worker->query->interrumpir && !worker->error_at_exec) // Interrupcion por desconexion de query_control

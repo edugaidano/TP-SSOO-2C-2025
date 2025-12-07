@@ -2,7 +2,6 @@
 
 void *process_handler(void *arg)
 {
-
     if (TIEMPO_AGING != 0 && string_equals_ignore_case(ALGORITMO_PLANIFICACION, "PRIORIDADES"))
     {
         pthread_t actualizador_de_prioridad;
@@ -41,6 +40,7 @@ void *actualizador()
                 query->prioridad--;
                 log_info(logger_master, "## %d Cambio de prioridad: %d - %d", query->id, (query->prioridad + 1), query->prioridad);
 
+                sem_wait(&sem_check_prior);
                 worker_t *worker_libre = buscar_worker_libre();
                 if (worker_libre == NULL && !list_is_empty(workers))
                 {
@@ -48,13 +48,23 @@ void *actualizador()
                     if (query_victima->prioridad > query->prioridad)
                     {
                         query_victima->worker->interrumpir = true; // Se desalijara cuando verifique la interrupcion
+                        sem_wait(&sem_int);
+                        sem_post(&sem_check_prior);
+                        break;
                     }
                 }
+                else if (worker_libre != NULL) 
+                {
+                    sem_post(&sem_check_prior);
+                    break; // Significa que esta reteniendo la cola de ready, cuando podria estar asignando
+                }
+                sem_post(&sem_check_prior);
             }
         }
 
         pthread_mutex_unlock(&mutex_ready);
         list_iterator_destroy(iterator);
+
     }
     return 0;
 }
