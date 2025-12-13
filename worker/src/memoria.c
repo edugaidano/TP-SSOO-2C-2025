@@ -257,7 +257,7 @@ int marco_libre() {
 }
 
 void interaccion_con_memoria(void* dest, void* src, int size, nodo_marco* n_marco) {
-    sleep(RETARDO_MEMORIA/1000);
+    usleep(RETARDO_MEMORIA*1000);
     memcpy(dest, src, size);
     if (string_equals_ignore_case(ALGORITMO_REEMPLAZO, "LRU")) {
         n_marco->time = temporal_gettime(cronometro);

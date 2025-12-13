@@ -194,7 +194,7 @@ query_t *buscar_victima()
     while (list_iterator_has_next(iterator))
     {
         query_t *query = list_iterator_next(iterator);
-        if (query->prioridad > victima->prioridad)
+        if (query->prioridad > victima->prioridad && !query->worker->interrumpir)
         {
             victima = query;
         }

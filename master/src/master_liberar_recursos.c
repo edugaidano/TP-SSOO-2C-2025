@@ -9,16 +9,18 @@ void free_worker(void* worker_ptr);
 
 void liberar_recursos() {
     log_info(logger_master, "liberando recursos globales");
+    log_destroy(logger_master);
+    config_destroy(config_master);
     list_destroy_and_destroy_elements(querys_ready, free_query);
     list_destroy_and_destroy_elements(querys_exec, free_query);
     list_destroy_and_destroy_elements(workers, free_worker);
-    sem_close(&sem_workers);
-    sem_close(&sem_ready);
     pthread_mutex_destroy(&mutex_exec);
     pthread_mutex_destroy(&mutex_ready);
     pthread_mutex_destroy(&mutex_workers);
-    log_destroy(logger_master);
-    config_destroy(config_master);
+    sem_close(&sem_workers);
+    sem_close(&sem_ready);
+    sem_close(&sem_fin_check_prior);
+    sem_close(&sem_check_prior);
 }
 
 // Private Functions //

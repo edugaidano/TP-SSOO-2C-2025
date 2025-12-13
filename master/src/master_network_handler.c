@@ -28,6 +28,12 @@ void *master_network_handler(void *arg)
             query->worker = NULL;
             query->interrumpir = false;
 
+            send(connection_socket, "ACK", 4, 0);
+
+            log_info(logger_master, 
+                "## Se conecta un Query Control para ejecutar la Query %s con prioridad %d- Id asignado: %d Nivel multiprocesamiento %d", 
+                archivo, prioridad, query->id, list_size(workers));
+
             if (string_equals_ignore_case(ALGORITMO_PLANIFICACION, "FIFO"))
             {
                 pthread_mutex_lock(&mutex_ready);
@@ -37,23 +43,18 @@ void *master_network_handler(void *arg)
             else if (string_equals_ignore_case(ALGORITMO_PLANIFICACION, "PRIORIDADES"))
             {
                 pthread_mutex_lock(&mutex_ready);
-                int position = list_add_sorted(querys_ready, query, priority_comparator);
-                
-                if (position == 0) {
-                    sem_wait(&sem_check_prior);
-                    worker_t *worker_libre = buscar_worker_libre();
-                    if (worker_libre == NULL && !list_is_empty(workers))
-                    {
-                        query_t *query_victima = buscar_victima();
-                        if (query_victima->prioridad > query->prioridad)
-                        {
-                            query_victima->worker->interrumpir = true; // Se desalojara cuando verifique la interrupcion
-                            sem_wait(&sem_int);
-                        }
-                    }
-                    sem_post(&sem_check_prior);
-                }
+                list_add_sorted(querys_ready, query, priority_comparator);
                 pthread_mutex_unlock(&mutex_ready);
+
+                sem_post(&sem_check_prior);
+                sem_wait(&sem_fin_check_prior);
+
+                if (TIEMPO_AGING != 0) {
+                    pthread_t query_aging_thread;
+                    pthread_create(&query_aging_thread, NULL, &actualizador, query);
+                    pthread_detach(query_aging_thread);
+                }
+                
             }
             else
             {
@@ -62,13 +63,7 @@ void *master_network_handler(void *arg)
                 exit(EXIT_FAILURE);
             }
 
-            send(connection_socket, "ACK", 4, 0);
-
             sem_post(&sem_ready);
-
-            log_info(logger_master, 
-                "## Se conecta un Query Control para ejecutar la Query %s con prioridad %d- Id asignado: %d Nivel multiprocesamiento %d", 
-                archivo, prioridad, query->id, list_size(workers));
 
             pthread_t query_handler_thread;
             pthread_create(&query_handler_thread, NULL, &query_handler, query);
@@ -189,7 +184,15 @@ void *worker_handler(void *arg)
                 //pthread_mutex_lock(&mutex_ready); 
                 list_remove_element(querys_exec, worker->query);
                 worker->query->state = EXEC;
+
                 list_add_sorted(querys_ready, worker->query, priority_comparator);
+                
+                if (TIEMPO_AGING != 0) {
+                    pthread_t query_aging_thread;
+                    pthread_create(&query_aging_thread, NULL, &actualizador, worker->query);
+                    pthread_detach(query_aging_thread);
+                }
+
                 sem_post(&sem_ready);
                 pthread_mutex_unlock(&mutex_exec);
                 //pthread_mutex_unlock(&mutex_ready);

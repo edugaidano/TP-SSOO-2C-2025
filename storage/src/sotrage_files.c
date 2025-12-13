@@ -287,7 +287,7 @@ rta_storage storage_write(char* file_name, char* tag, int l_block_num, char* buf
     storage_metadata_destroy(meta);
 
     
-    // TODO sem para bloques fisicos
+   
     FILE* p_block = fopen(phys_path, "wb");
     fwrite(buffer, BLOCK_SIZE, 1, p_block);
     fclose(p_block);
