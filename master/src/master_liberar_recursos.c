@@ -19,7 +19,6 @@ void liberar_recursos() {
     pthread_mutex_destroy(&mutex_workers);
     sem_close(&sem_workers);
     sem_close(&sem_ready);
-    sem_close(&sem_fin_check_prior);
     sem_close(&sem_check_prior);
 }
 

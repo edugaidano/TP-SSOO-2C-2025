@@ -46,8 +46,7 @@ void *master_network_handler(void *arg)
                 list_add_sorted(querys_ready, query, priority_comparator);
                 pthread_mutex_unlock(&mutex_ready);
 
-                sem_post(&sem_check_prior);
-                sem_wait(&sem_fin_check_prior);
+                check_prior();
 
                 if (TIEMPO_AGING != 0) {
                     pthread_t query_aging_thread;

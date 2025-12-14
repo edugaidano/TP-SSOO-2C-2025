@@ -2,13 +2,6 @@
 
 void *process_handler(void *arg)
 {
-    if (TIEMPO_AGING != 0 && string_equals_ignore_case(ALGORITMO_PLANIFICACION, "PRIORIDADES"))
-    {
-        pthread_t revisar_prioridad;
-        pthread_create(&revisar_prioridad, NULL, &check_prior, NULL);
-        pthread_detach(revisar_prioridad);
-    }
-
     while (1)
     {
         sem_wait(&sem_ready);

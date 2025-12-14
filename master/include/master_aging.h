@@ -4,6 +4,6 @@
 #include "master_util.h"
 
 void *actualizador();
-void *check_prior();
+void check_prior();
 
 #endif
