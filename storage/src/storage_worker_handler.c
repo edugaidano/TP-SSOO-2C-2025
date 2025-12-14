@@ -65,8 +65,7 @@ void *storage_worker_handler(void *arg)
             // enviar resultado al Worker
             if (send(socket, &result, sizeof(rta_storage), 0) <= 0)
             {
-                log_error(logger_storage,
-                          "Error o desconexión al enviar el resultado de la instrucción");
+                log_error(logger_storage, "Error o desconexión al enviar el resultado de la instrucción");
                 close(socket);
                 // limpiar paquete antes de salir
                 list_destroy_and_destroy_elements(package, free);
@@ -137,9 +136,8 @@ void *storage_worker_handler(void *arg)
         }
         default:
         {
-            log_warning(logger_storage,
-                        "##Worker %s - Operación desconocida (opcode=%d)",
-                        id_worker ? id_worker : "?", opcode);
+            log_warning(logger_storage, "##Worker %s - Operación desconocida (opcode=%d)",
+                id_worker ? id_worker : "?", opcode);
             break;
         }
         }

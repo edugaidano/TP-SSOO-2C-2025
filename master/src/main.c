@@ -4,7 +4,7 @@ int main(int argc, char *argv[])
 {
     if (argc < 2)
     {
-        fprintf(stderr, "Pasar por parámetro el nombre del archivo .conf!\n");
+        fprintf(stderr, "Pasar por parámetro el nombre del archivo .config!\n");
         exit(EXIT_FAILURE);
     }
     signal(SIGPIPE, SIG_IGN);
@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
     pthread_create(&process_thread, NULL, &process_handler, NULL);
     pthread_detach(process_thread);
 
-    master_network_handler(&server_socket);
+    master_network_handler(server_socket);
 
     return 0;
 }

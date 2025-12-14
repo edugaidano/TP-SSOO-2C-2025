@@ -4,7 +4,7 @@ int main(int argc, char *argv[])
 {
     if (argc < 2)
     {
-        fprintf(stderr, "Pasar por parámetro el nombre del archivo .conf!\n");
+        fprintf(stderr, "Pasar por parámetro el nombre del archivo .config!\n");
         exit(EXIT_FAILURE);
     }
 

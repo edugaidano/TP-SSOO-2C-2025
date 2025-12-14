@@ -21,7 +21,7 @@ void finalizar_query(query_t *query, razon_fin razon, rta_storage c_error)
         break;
     case ERR_DESC_WORKER:
         log_info(logger_master, "## Se desconecta el Worker %s - Se finaliza la Query %d - Cantidad total de Workers: %d", 
-            query->worker->id, query->id, (list_size(workers) - 1));
+            query->worker->id, query->id, list_size(workers) - 1);
         break;
     case ERR_STORAGE:
         log_error(logger_master, "Se finzaliza la query %d por un error durante la ejecucion de la misma", query->id);

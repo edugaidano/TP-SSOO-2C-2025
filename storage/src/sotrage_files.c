@@ -285,8 +285,6 @@ rta_storage storage_write(char* file_name, char* tag, int l_block_num, char* buf
     }
     
     storage_metadata_destroy(meta);
-
-    
    
     FILE* p_block = fopen(phys_path, "wb");
     fwrite(buffer, BLOCK_SIZE, 1, p_block);
@@ -371,10 +369,16 @@ rta_storage storage_commit(char* file, char* tag, char* query_id) {
             free(hash);
             continue;
         }
+
         
         pthread_mutex_unlock(&bhi_mutex);
         free(hash);
-
+        
+        if (atoi(phys_blk + 5) == actual_blk) { // No es necesario reasignar el bloque
+            sem_post(blk_m);
+            continue;
+        }
+        
         char* phys_path = string_from_format("physical_blocks/%s.dat", phys_blk);
 
         unlink(log_path);
@@ -400,7 +404,7 @@ rta_storage storage_commit(char* file, char* tag, char* query_id) {
 
         storage_metadata_write(file, tag, metadata);
 
-        log_info(logger_storage, "## %s - %s:%s Bloque Lógico %5d se reasigna de %4d a %s",
+        log_info(logger_storage, "## %s - %s:%s Bloque Lógico %05d se reasigna de %04d a %s",
             query_id, file, tag, i, actual_blk, phys_blk + 5);
 
     }
@@ -465,6 +469,12 @@ rta_storage storage_tag(char* file_o, char* tag_o, char* file_n, char* tag_n, ch
 }
 
 rta_storage storage_delete(char* file, char* tag, char* query_id) {
+    if (string_equals_ignore_case(file, "initial_file") && string_equals_ignore_case(tag, "BASE"))
+    {
+        log_error(logger_storage, "No se pude eliminar %s:%s", file, tag);
+        return NOT_DEF_ERR;
+    }
+
     storage_wait(file, tag);
     t_metadata_file* meta = storage_metadata_read(file, tag);
     if (!meta)

@@ -4,7 +4,7 @@ int main(int argc, char *argv[])
 {
     if (argc < 3)
     {
-        fprintf(stderr, "Uso: %s [archivo_conf] [ID Worker]\n", argv[0]);
+        fprintf(stderr, "Uso: %s [archivo_config] [ID Worker]\n", argv[0]);
         exit(EXIT_FAILURE);
     }
 
@@ -120,7 +120,23 @@ int main(int argc, char *argv[])
                 log_error(logger_worker, "Error o desconeccion al recibir el resultado de la interrupcion");
                 exit(EXIT_FAILURE);
             }
+            
             if (resultado)  {
+
+                int cant_file_tag = list_size(file_tag_pages);
+
+                t_instrucion* instruccion_flush = malloc(sizeof(t_instrucion));
+                instruccion_flush->copi = FLUSH;
+                instruccion_flush->identificador = string_duplicate("FLUSH");
+                for (int i = 0; i < cant_file_tag; i++) {
+                    file_tag* ft = list_get(file_tag_pages, i);
+
+                    instruccion_flush->datos = &(ft->identificador);
+                    interpretar_FLUSH(instruccion_flush);
+                }
+                free(instruccion_flush->identificador);
+                free(instruccion_flush);
+
                 log_info(logger_worker, "## Query %s: Desalojada por pedido del Master", query_id);
                 break;
             }

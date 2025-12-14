@@ -1,9 +1,14 @@
 #include "master_network_handler.h"
 
-void *master_network_handler(void *arg)
-{
-    int socket_server = *(int *)arg;
+// Private Functions //
 
+void *query_handler(void *arg);
+void *worker_handler(void *arg);
+
+// Public Funtions //
+
+void master_network_handler(int socket_server)
+{
     while (1)
     {
         int connection_socket = accept_connection(socket_server, logger_master);
@@ -103,6 +108,8 @@ void *master_network_handler(void *arg)
         list_destroy_and_destroy_elements(list, free);
     }
 }
+
+// Private Functions //
 
 void *query_handler(void *arg)
 {

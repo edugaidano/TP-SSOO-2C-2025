@@ -205,7 +205,7 @@ void enviar_paquete_a(paquete_t* paquete, int fd, char* modulo, char* instruccio
 
     } else { // case "Storage"
         rta_storage resultado;
-        if (recv(fd, &resultado, sizeof(resultado_t), MSG_WAITALL) <= 0) {
+        if (recv(fd, &resultado, sizeof(rta_storage), MSG_WAITALL) <= 0) {
             log_error(logger_worker, "Error o desconeccion en %s al recibir resultado de instruccion %s", modulo, instruccion);
             exit(EXIT_FAILURE);
         }

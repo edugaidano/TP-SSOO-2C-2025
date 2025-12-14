@@ -11,7 +11,7 @@ int main(int argc, char *argv[])
 {
     if (argc < 4)
     {
-        fprintf(stderr, "Uso: %s [archivo_conf] [archivo_query] [prioridad]\n", argv[0]);
+        fprintf(stderr, "Uso: %s [archivo_config] [archivo_query] [prioridad]\n", argv[0]);
         exit(EXIT_FAILURE);
     }
 
@@ -51,16 +51,9 @@ void recibir_mensaje()
         op_code opcode = get_opcode(package);
 
         // Casos particulares
-        if (opcode != NOTIF_QUERY_CONTROL && opcode != DESCONEXION)
+        if (opcode != NOTIF_QUERY_CONTROL)
         {
             log_error(logger_query_control, "Se recibio un paquete desconocido");
-            list_destroy_and_destroy_elements(package, free);
-            exit(EXIT_FAILURE);
-        }
-        
-        if (opcode == DESCONEXION)
-        {
-            log_error(logger_query_control, "El master se desconecto");
             list_destroy_and_destroy_elements(package, free);
             exit(EXIT_FAILURE);
         }
