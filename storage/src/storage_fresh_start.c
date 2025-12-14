@@ -54,7 +54,7 @@ void storage_fresh_start()
         return;
     }
 
-    t_bitarray* bitarray_ptr = bitarray_create_with_mode(bit_ptr, bitmap_bytes, LSB_FIRST);
+    t_bitarray* bitarray_ptr = bitarray_create_with_mode(bit_ptr, bitmap_bytes, MSB_FIRST);
 
     for (int i = 0; i < (bitmap_bytes * 8); i++) {
         bitarray_clean_bit(bitarray_ptr, i);

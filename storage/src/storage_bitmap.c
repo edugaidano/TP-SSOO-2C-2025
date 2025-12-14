@@ -38,7 +38,7 @@ int bitmap_init(const char* mount_point, int blocks_count)
 
     free(path);
 
-    bitmap = bitarray_create_with_mode(bitmap_data, bitmap_size, LSB_FIRST);
+    bitmap = bitarray_create_with_mode(bitmap_data, bitmap_size, MSB_FIRST);
     log_info(logger_storage, "Bitmap inicializado (%d bloques, %zu bytes)", blocks_count, bitmap_size);
     return 0;
 }
