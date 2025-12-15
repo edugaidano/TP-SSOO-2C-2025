@@ -52,24 +52,35 @@ t_list* parsear_archivo(char* path_archivo_query) {
             case COMMIT:    // Formato: COMMIT <NOMBRE_FILE>:<TAG>
             case DELETE:    // Formato: DELETE <NOMBRE_FILE>:<TAG>
             case FLUSH:     // Formato: FLUSH <NOMBRE_FILE>:<TAG>
-                string_array_push(&instruccion->datos, tokens[1]);
+            {
+                char* file_tag = string_duplicate(tokens[1]);
+                string_array_push(&instruccion->datos, file_tag);
                 break;
-
+            }
             case TRUNCATE:  // Formato: TRUNCATE <NOMBRE_FILE>:<TAG> <TAMAÑO>
             case TAG:       // Formato: TAG <NOMBRE_FILE_ORIGEN>:<TAG_ORIGEN> <NOMBRE_FILE_DESTINO>:<TAG_DESTINO>
-                string_array_push(&instruccion->datos, tokens[1]);
-                string_array_push(&instruccion->datos, tokens[2]);
+            {
+                char* file_tag = string_duplicate(tokens[1]);
+                char* dato = string_duplicate(tokens[2]);
+                string_array_push(&instruccion->datos, file_tag);
+                string_array_push(&instruccion->datos, dato);
                 break;
-
+            }
             case READ:      // Formato: READ <NOMBRE_FILE>:<TAG> <DIRECCIÓN BASE> <TAMAÑO>
             case WRITE:     // Formato: WRITE <NOMBRE_FILE>:<TAG> <DIRECCIÓN BASE> <CONTENIDO>
-                string_array_push(&instruccion->datos, tokens[1]);
-                string_array_push(&instruccion->datos, tokens[2]);
-                string_array_push(&instruccion->datos, tokens[3]);
+            {
+                char* file_tag = string_duplicate(tokens[1]);
+                char* dato_1 = string_duplicate(tokens[2]);
+                char* dato_2 = string_duplicate(tokens[3]);
+                string_array_push(&instruccion->datos, file_tag);
+                string_array_push(&instruccion->datos, dato_1);
+                string_array_push(&instruccion->datos, dato_2);
                 break;
-
+            }   
             default:        // Formato: END
                 break;
+
+            string_array_destroy(tokens);
         }
 
         list_add_in_index(instrucciones, 0, instruccion);

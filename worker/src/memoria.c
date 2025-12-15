@@ -25,7 +25,8 @@ void init_memoria() {
     
     // bitmap
     int bytes_bit_map = (cantidad_marcos + 7)/ 8;
-    bit_map = bitarray_create_with_mode((char*)malloc(bytes_bit_map), bytes_bit_map, LSB_FIRST);
+    bit_array = malloc(bytes_bit_map);
+    bit_map = bitarray_create_with_mode((char*)bit_array, bytes_bit_map, LSB_FIRST);
     for (int i = 0; i < bytes_bit_map * 8; i++) {
         bitarray_clean_bit(bit_map, i);
     }

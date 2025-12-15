@@ -64,6 +64,7 @@ extern int storage_socket;
 // Memoria //
 
 extern void *memoria;
+extern void *bit_array;
 extern t_bitarray *bit_map;
 extern t_list *marco;
 extern t_list *file_tag_pages;

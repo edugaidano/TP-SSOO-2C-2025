@@ -19,6 +19,7 @@ int master_socket = -1;
 int storage_socket = -1;
 
 void *memoria;
+void *bit_array;
 t_bitarray *bit_map;
 t_list *marco;
 t_list *file_tag_pages;
