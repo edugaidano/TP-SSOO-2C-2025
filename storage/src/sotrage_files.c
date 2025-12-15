@@ -331,6 +331,7 @@ rta_storage storage_read(char* file_name, char* tag, int l_block_num, char* buff
     FILE* p_block = fopen(phys_path, "rb");
     fread(buffer, 1, BLOCK_SIZE, p_block);
     fclose(p_block);
+    free(phys_path);
     
     sem_post(blk_m);
     log_info(logger_storage, "## %s - Bloque Lógico Leído %s:%s - Número de Bloque: %d",

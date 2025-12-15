@@ -26,6 +26,7 @@ void liberar_recursos() {
 void free_block_mutex(void* mutex) {
     sem_t* sem_mutex = (sem_t*)mutex;
     sem_destroy(sem_mutex);
+    free(sem_mutex);
 }
 
 void free_file_tags_locks(void* dictionary_locks){
