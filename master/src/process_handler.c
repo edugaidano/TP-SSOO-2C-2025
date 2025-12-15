@@ -12,6 +12,9 @@ void *process_handler(void *arg)
 
         hacer_par_query_worker(query, worker);
         solicitar_ejecucion_query(query, worker->socket);
+
+        if (signal_asign)
+            sem_post(&sem_asign);
     }
     return 0;
 }

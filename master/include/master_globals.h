@@ -23,10 +23,13 @@ extern sem_t sem_ready;
 extern sem_t sem_workers;
 extern sem_t sem_int;
 extern sem_t sem_check_prior;
+extern sem_t sem_asign;
 
 extern pthread_mutex_t mutex_ready;
 extern pthread_mutex_t mutex_exec;
 extern pthread_mutex_t mutex_workers;
+
+extern bool signal_asign;
 
 typedef struct worker worker_t;
 typedef struct query query_t;

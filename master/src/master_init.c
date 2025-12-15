@@ -29,6 +29,7 @@ void init(char *config_name)
     sem_init(&sem_workers, 0, 0);
     sem_init(&sem_ready, 0, 0);
     sem_init(&sem_int, 0, 0);
+    sem_init(&sem_asign, 0, 0);
     sem_init(&sem_check_prior, 0, 1);
 
 }

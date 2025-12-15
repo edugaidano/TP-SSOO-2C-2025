@@ -42,8 +42,14 @@ void check_prior() {
         query_t *query_victima = buscar_victima();
         if (query_victima->prioridad > siguiente_query->prioridad && !query_victima->worker->interrumpir)
         {
+            signal_asign = true;
             query_victima->worker->interrumpir = true; // Se desalojara cuando verifique la interrupcion
             sem_wait(&sem_int);
+            pthread_mutex_unlock(&mutex_ready);
+            sem_wait(&sem_asign);
+            signal_asign = false;
+            sem_post(&sem_check_prior);
+            return;
         }
     }
 
