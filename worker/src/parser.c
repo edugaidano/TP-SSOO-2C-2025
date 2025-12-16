@@ -80,8 +80,9 @@ t_list* parsear_archivo(char* path_archivo_query) {
             default:        // Formato: END
                 break;
 
-            string_array_destroy(tokens);
         }
+        
+        string_array_destroy(tokens);
 
         list_add_in_index(instrucciones, 0, instruccion);
     }
