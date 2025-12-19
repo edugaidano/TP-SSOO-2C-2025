@@ -108,6 +108,8 @@ int main(int argc, char *argv[])
             }
 
             if (fin) { break; }
+
+            pc++;
             
             // Manejo de interrupciones
             paquete_t* paquete_interrupcion = crear_paquete(CONSULTA_INTERRUPCION);
@@ -140,8 +142,6 @@ int main(int argc, char *argv[])
                 log_info(logger_worker, "## Query %s: Desalojada por pedido del Master", query_id);
                 break;
             }
-
-            pc++;
         }
 
         free(query_id);
