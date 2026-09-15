@@ -1,6 +1,11 @@
 # TP de Sistemas Operativos 
 UTN FRBA  -  2do Cuatrimestre - 2025
 
+## Participantes
+* Elias Nicolas Aires
+* Sofia Mei Sakugawa
+* Eduardo Andres Gaidano Riquel 
+
 ## Dependencias
 
 Para poder compilar y ejecutar el proyecto, es necesario tener instalada la
@@ -13,6 +18,15 @@ make debug
 make install
 ```
 
+Además es recomendable utilizar la Máquina Virtual de la cátedra, ya que el trabajo fue desarrollado para ser capaz de ejecutarse en ella.
+
+
+Si se prefiere trabajar en otro entorno Linux, es recomendable verificar los archivos `.config` de cada módulo.
+
+
+Maquinas Virtuales: https://docs.utnso.com.ar/recursos/vms.html
+
+
 ## Compilación y ejecución
 
 Cada módulo del proyecto se compila de forma independiente a través de un
@@ -23,9 +37,9 @@ El ejecutable resultante de la compilación se guardará en la carpeta `bin` del
 módulo. Ejemplo:
 
 ```sh
-cd kernel
+cd master
 make
-./bin/kernel
+./bin/master
 ```
 
 ## Documentos
